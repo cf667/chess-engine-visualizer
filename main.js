@@ -1,31 +1,55 @@
-const { app, BrowserWindow, Menu } = require('electron/main')
-const path = require('node:path')
-require('electron-reload')(__dirname)
+// IMPORTS
+
+const { app, BrowserWindow } = require('electron');
+require('electron-reload')(__dirname);
+const path = require('path');
+const { spawn } = require('child_process');
+
+// START ENGINE
+
+const enginePath = path.join(__dirname, 'engine', 'x64', 'Debug', 'engine.exe');
+console.log(enginePath);
+const engineProc = spawn(enginePath);
+
+// CREATE WINDOW
 
 function createWindow () {
   const win = new BrowserWindow({
     width: 800,
     height: 600,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js')
-    }
-  })
+  });
 
-  win.loadFile('main.html')
+  win.loadFile('main.html');
 }
 
 app.whenReady().then(() => {
-  createWindow()
+  createWindow();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
+      createWindow();
     }
-  })
+  });
 })
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit()
-  }
-})
+  engineProc.kill();
+  app.quit();
+});
+
+// INIT SOCKET
+
+ws = new WebSocket('ws://localhost:8123');
+
+ws.onopen = () => {
+  console.log('ws open');
+  ws.send('echo');
+}
+
+ws.onmessage = (event) => {
+  console.log(event.data);
+}
+
+ws.onerror = (err) => {
+  console.log(err);
+}
