@@ -4,9 +4,17 @@
 #include <nlohmann/json.hpp>
 #include <iostream>
 
+#include "game.h"
+
 using json = nlohmann::json;
+int test[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
 int main() {
+    std::cout << test << std::endl;
+
+    Game game;
+    printPosition(game.position);
+
     // INIT SOCKETS
 
     uWS::App().ws<void*>("/*", {
