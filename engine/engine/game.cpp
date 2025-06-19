@@ -72,7 +72,7 @@ const std::vector<char> rookOffset =	{ -10, -1, 1, 10 };
 const std::vector<char> knightOffset =	{ -21, -19, -12, -8, 8, 12, 19, 21 };
 const std::vector<char> bishopOffset =	{ -11, -9, 9, 11 };
 
-const std::vector<std::vector<char>> offset = { kingOffset, queenOffset, pawnOffset, rookOffset, knightOffset, bishopOffset };
+const std::vector<std::vector<char>> offsets = { kingOffset, queenOffset, pawnOffset, rookOffset, knightOffset, bishopOffset };
 
 void Move::Init(char origin, char destination, char flags, char capture)
 {
@@ -151,9 +151,51 @@ Move* Game::GetLegalMoves()
 		}
 		else //every other piece
 		{
-			for (int i = 0; i < offset[Game::position[i] & 0b111].size(); i++)
+			for (int offset : offsets[Game::position[i] & 0b111]) //iterate through moveset
 			{
+				if (Game::position[i] & 1) //check if piece can slide (queen, rook, bishop)
+				{
+					for (int slide = 1; !((Game::position[i + offset * slide] >> 5) & 1); slide++) //as long as its not off the board
+					{
+						if ((Game::position[i + offset * slide] >> 4) & 1) //empty square
+						{
+							curMove.Init(i, i + offset * slide, QUIETMOVE, EMPTY);
+							Game::legalMoves[curMoveIndex] = curMove;
+							curMoveIndex++;
+						}
+						else if (((Game::position[i + offset * slide] >> 3) & 1) != Game::toMove) //enemy piece
+						{
+							curMove.Init(i, i + offset * slide, CAPTURE, Game::position[i + offset * slide]);
+							Game::legalMoves[curMoveIndex] = curMove;
+							curMoveIndex++;
+							break;
+						}
+						else //friendly piece
+						{
+							break;
+						}
+					}
+				}
+				else //pieces which cant slide (king, knight)
+				{
+					if ((Game::position[i + offset] >> 5) & 1) //out of bound
+					{
+						continue;
+					}
 
+					if ((Game::position[i + offset] >> 4) & 1) //empty square
+					{
+						curMove.Init(i, i + offset, QUIETMOVE, EMPTY);
+						Game::legalMoves[curMoveIndex] = curMove;
+						curMoveIndex++;
+					}
+					else if (((Game::position[i + offset] >> 3) & 1) != Game::toMove) //enemy piece
+					{
+						curMove.Init(i, i + offset, CAPTURE, Game::position[i + offset]);
+						Game::legalMoves[curMoveIndex] = curMove;
+						curMoveIndex++;
+					}
+				}
 			}
 		}
 	}

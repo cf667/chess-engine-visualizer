@@ -3,10 +3,12 @@
 class Move
 {
 public:
-	char origin = 0;
-	char destination = 0;
-	char flags = 0;
-	char capture = 0;
+	void Init(char origin, char destination, char flags, char capture);
+
+	char origin;
+	char destination;
+	char flags;
+	char capture;
 };
 
 class Game
