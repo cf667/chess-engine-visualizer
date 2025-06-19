@@ -3,17 +3,22 @@
 #include <algorithm>
 #include <iostream>
 #include <bitset>
+#include <vector>
 
+//codes for each piece
+//first 3 bits:
 #define KING 0x0
 #define QUEEN 0x1
 #define PAWN 0x2
 #define ROOK 0x3
 #define KNIGHT 0x4
 #define BISHOP 0x5
-#define WHITE 0x8
-#define EMPTY 0x10
-#define OUTOFBOUND 0x20
 
+#define WHITE 0x8 //4th bit
+#define EMPTY 0x10 //5th bit
+#define OUTOFBOUND 0x20 //6th bit
+
+//first 4 bits
 #define WKING 0x8
 #define WQUEEN 0x9
 #define WPAWN 0xA
@@ -27,6 +32,23 @@
 #define BKNIGHT 0x4
 #define BBISHOP 0x5
 
+//moveTypes
+#define QUIETMOVE 0x0
+#define DOUBLEPAWNPUSH 0x1
+#define CASTLE_KING 0x2
+#define CASTLE_QUEEN 0x3
+#define CAPTURE 0x4
+#define ENPASSANT 0x5
+#define PROMOTION_KNIGHT 0x8
+#define PROMOTION_BISHOP 0x9
+#define PROMOTION_ROOK 0xA
+#define PROMOTION_QUEEN 0xB
+#define PROMOTION_KNIGHT_CAPTURE 0xC
+#define PROMOTION_BISHOP_CAPTURE 0xD
+#define PROMOTION_ROOK_CAPTURE 0xE
+#define PROMOTION_QUEEN_CAPTURE 0xF
+
+//position at the start of every game
 const unsigned char startingPos[120] =
 {	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
 	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
@@ -41,10 +63,102 @@ const unsigned char startingPos[120] =
 	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
 	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND };
 
+//offset for each move direction - pawns are handled separately
+//most right bit in each piece code = slide
+const std::vector<char> kingOffset =	{ -11, -10, -9, -1, 1, 9, 10, 11 };
+const std::vector<char> queenOffset =	{ -11, -10, -9, -1, 1, 9, 10, 11 };
+const std::vector<char> pawnOffset =	{ 0 };
+const std::vector<char> rookOffset =	{ -10, -1, 1, 10 };
+const std::vector<char> knightOffset =	{ -21, -19, -12, -8, 8, 12, 19, 21 };
+const std::vector<char> bishopOffset =	{ -11, -9, 9, 11 };
+
+const std::vector<std::vector<char>> offset = { kingOffset, queenOffset, pawnOffset, rookOffset, knightOffset, bishopOffset };
+
+void Move::Init(char origin, char destination, char flags, char capture)
+{
+	Move::origin = origin;
+	Move::destination = destination;
+	Move::flags = flags;
+	Move::capture = capture;
+}
+
 Game::Game()
 {
-	std::cout << "constructor" << std::endl;
-	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(position));
+	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(Game::position));
+	Game::toMove = 1;
+}
+
+Move* Game::GetLegalMoves()
+{
+	int curMoveIndex = 0;
+	Move curMove;
+
+	int pawnOffset;
+	int doublePushRank;
+
+	for (int i = 0; i < 120; i++) //iterate through board
+	{
+		if (!(i % 10))
+		{
+			std::cout << std::endl;
+		}
+		std::cout << i << " ";
+
+		if ((Game::position[i] >> 5) & 1 || (Game::position[i] >> 4) & 1 || ((Game::position[i] >> 3) & 1) != Game::toMove) //if square is out of bound, empty or piece is the wrong color
+		{
+			continue;
+		}
+
+		if ((Game::position[i] & 0b111) == PAWN) //pawn
+		{
+			if ((Game::position[i] >> 3) & 1) //check for color
+			{
+				pawnOffset = -10;
+				doublePushRank = 80;
+			}
+			else
+			{
+				pawnOffset = 10;
+				doublePushRank = 30;
+			}
+			
+			if ((Game::position[i + pawnOffset] >> 4) & 1) //normal move
+			{
+				curMove.Init(i, i + pawnOffset, QUIETMOVE, EMPTY);
+				Game::legalMoves[curMoveIndex] = curMove;
+				curMoveIndex++;
+
+				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnOffset * 2] >> 4) & 1) //double pawn push
+				{
+					curMove.Init(i, i + pawnOffset * 2, DOUBLEPAWNPUSH, EMPTY);
+					Game::legalMoves[curMoveIndex] = curMove;
+					curMoveIndex++;
+				}
+			}
+
+			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset + 1] >> 3) & 1) != Game::toMove) //right side capture
+			{
+				curMove.Init(i, i + pawnOffset + 1, CAPTURE, Game::position[i + pawnOffset + 1]);
+				Game::legalMoves[curMoveIndex] = curMove;
+				curMoveIndex++;
+			}
+			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset - 1] >> 3) & 1) != Game::toMove) //left side capture
+			{
+				curMove.Init(i, i + pawnOffset - 1, CAPTURE, Game::position[i + pawnOffset - 1]);
+				Game::legalMoves[curMoveIndex] = curMove;
+				curMoveIndex++;
+			}
+		}
+		else //every other piece
+		{
+			for (int i = 0; i < offset[Game::position[i] & 0b111].size(); i++)
+			{
+
+			}
+		}
+	}
+
+	return Game::legalMoves;
 }
 
 unsigned char* printPosition(unsigned char* pos)

@@ -14,6 +14,11 @@ int main() {
 
     Game game;
     printPosition(game.position);
+    game.GetLegalMoves();
+    for (int i = 0; i < 10; i++)
+    {
+        std::cout << std::endl << int(game.legalMoves[i].origin) << " " << int(game.legalMoves[i].destination);
+    }
 
     // INIT SOCKETS
 
