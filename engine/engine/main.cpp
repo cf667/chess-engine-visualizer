@@ -14,10 +14,10 @@ int main() {
 
     Game game;
     printPosition(game.position);
-    game.GetLegalMoves();
-    for (int i = 0; i < 25; i++)
+    std::vector<Move> moveList = game.GetLegalMoves();
+    for (int i = 0; i < moveList.size(); i++)
     {
-        std::cout << std::endl << int(game.legalMoves[i].origin) << " " << int(game.legalMoves[i].destination);
+        std::cout << std::endl << int(moveList[i].origin) << " " << int(moveList[i].destination);
     }
 
     // INIT SOCKETS

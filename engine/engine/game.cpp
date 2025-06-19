@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <iostream>
 #include <bitset>
-#include <vector>
 
 //codes for each piece
 //first 3 bits:
@@ -88,8 +87,10 @@ Game::Game()
 	Game::toMove = 1;
 }
 
-Move* Game::GetLegalMoves()
+std::vector<Move> Game::GetLegalMoves()
 {
+	std::vector<Move> moveList;
+
 	int curMoveIndex = 0;
 	Move curMove;
 
@@ -125,13 +126,13 @@ Move* Game::GetLegalMoves()
 			if ((Game::position[i + pawnOffset] >> 4) & 1) //normal move
 			{
 				curMove.Init(i, i + pawnOffset, QUIETMOVE, EMPTY);
-				Game::legalMoves[curMoveIndex] = curMove;
+				moveList.push_back(curMove);
 				curMoveIndex++;
 
 				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnOffset * 2] >> 4) & 1) //double pawn push
 				{
 					curMove.Init(i, i + pawnOffset * 2, DOUBLEPAWNPUSH, EMPTY);
-					Game::legalMoves[curMoveIndex] = curMove;
+					moveList.push_back(curMove);
 					curMoveIndex++;
 				}
 			}
@@ -139,13 +140,13 @@ Move* Game::GetLegalMoves()
 			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset + 1] >> 3) & 1) != Game::toMove) //right side capture
 			{
 				curMove.Init(i, i + pawnOffset + 1, CAPTURE, Game::position[i + pawnOffset + 1]);
-				Game::legalMoves[curMoveIndex] = curMove;
+				moveList.push_back(curMove);
 				curMoveIndex++;
 			}
 			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset - 1] >> 3) & 1) != Game::toMove) //left side capture
 			{
 				curMove.Init(i, i + pawnOffset - 1, CAPTURE, Game::position[i + pawnOffset - 1]);
-				Game::legalMoves[curMoveIndex] = curMove;
+				moveList.push_back(curMove);
 				curMoveIndex++;
 			}
 		}
@@ -160,13 +161,13 @@ Move* Game::GetLegalMoves()
 						if ((Game::position[i + offset * slide] >> 4) & 1) //empty square
 						{
 							curMove.Init(i, i + offset * slide, QUIETMOVE, EMPTY);
-							Game::legalMoves[curMoveIndex] = curMove;
+							moveList.push_back(curMove);
 							curMoveIndex++;
 						}
 						else if (((Game::position[i + offset * slide] >> 3) & 1) != Game::toMove) //enemy piece
 						{
 							curMove.Init(i, i + offset * slide, CAPTURE, Game::position[i + offset * slide]);
-							Game::legalMoves[curMoveIndex] = curMove;
+							moveList.push_back(curMove);
 							curMoveIndex++;
 							break;
 						}
@@ -186,13 +187,13 @@ Move* Game::GetLegalMoves()
 					if ((Game::position[i + offset] >> 4) & 1) //empty square
 					{
 						curMove.Init(i, i + offset, QUIETMOVE, EMPTY);
-						Game::legalMoves[curMoveIndex] = curMove;
+						moveList.push_back(curMove);
 						curMoveIndex++;
 					}
 					else if (((Game::position[i + offset] >> 3) & 1) != Game::toMove) //enemy piece
 					{
 						curMove.Init(i, i + offset, CAPTURE, Game::position[i + offset]);
-						Game::legalMoves[curMoveIndex] = curMove;
+						moveList.push_back(curMove);
 						curMoveIndex++;
 					}
 				}
@@ -200,7 +201,7 @@ Move* Game::GetLegalMoves()
 		}
 	}
 
-	return Game::legalMoves;
+	return moveList;
 }
 
 unsigned char* printPosition(unsigned char* pos)
