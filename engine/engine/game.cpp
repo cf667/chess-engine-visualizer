@@ -93,6 +93,18 @@ bool Game::MakeMove(Move move)
 	position[move.origin] = EMPTY;
 
 	moveHist.push_back(move);
+	Game::toMove = !Game::toMove;
+
+	return 1;
+}
+
+bool Game::RevertMove()
+{
+	position[moveHist.back().origin] = position[moveHist.back().destination];
+	position[moveHist.back().destination] = moveHist.back().capture;
+
+	moveHist.pop_back();
+	Game::toMove = !Game::toMove;
 
 	return 1;
 }

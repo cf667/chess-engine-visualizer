@@ -16,10 +16,14 @@ class Game
 {
 public:
 	Game();
+	bool MakeMove(Move move);
+	bool RevertMove();
 	std::vector<Move> GetLegalMoves();
 
 	bool toMove; // 1 for white / 0 for black
 	unsigned char position[120]; //10x12
+
+	std::vector<Move> moveHist;
 };
 
 unsigned char* printPosition(unsigned char* pos);
