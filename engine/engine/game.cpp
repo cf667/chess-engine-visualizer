@@ -87,6 +87,16 @@ Game::Game()
 	Game::toMove = 1;
 }
 
+bool Game::MakeMove(Move move)
+{
+	position[move.destination] = position[move.origin];
+	position[move.origin] = EMPTY;
+
+	moveHist.push_back(move);
+
+	return 1;
+}
+
 std::vector<Move> Game::GetLegalMoves()
 {
 	std::vector<Move> moveList;
