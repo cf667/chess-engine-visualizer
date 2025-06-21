@@ -47,6 +47,12 @@
 #define PROMOTION_ROOK_CAPTURE 0xE
 #define PROMOTION_QUEEN_CAPTURE 0xF
 
+//castling ability
+#define WKCASTLE 0x1 //white king side - 1st bit
+#define WQCASTLE 0x2 //white queen side - 2nd bit
+#define BKCASTLE 0x4 //black king side - 3rd bit
+#define BQCASTLE 0x8 //black queen side - 4th bit
+
 //position at the start of every game
 const unsigned char startingPos[120] =
 {	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
@@ -85,6 +91,14 @@ Game::Game()
 {
 	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(Game::position));
 	Game::toMove = 1;
+	Game::enPassantTarget = 0;
+	Game::castlingAbility = 0xF; //0b1111 - every castle allowed
+	Game::halfMoveCounter = 0;
+}
+
+Game::Game(const char* fen)
+{
+
 }
 
 bool Game::MakeMove(Move move)
