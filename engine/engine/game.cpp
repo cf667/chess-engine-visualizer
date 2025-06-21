@@ -71,7 +71,7 @@ const std::vector<char> rookOffset =	{ -10, -1, 1, 10 };
 const std::vector<char> knightOffset =	{ -21, -19, -12, -8, 8, 12, 19, 21 };
 const std::vector<char> bishopOffset =	{ -11, -9, 9, 11 };
 
-const std::vector<std::vector<char>> offsets = { kingOffset, queenOffset, pawnOffset, rookOffset, knightOffset, bishopOffset };
+const std::vector<std::vector<char>> offsets = { pawnOffset, queenOffset, pawnOffset, rookOffset, knightOffset, bishopOffset, kingOffset }; //pawnOffset -> NULL
 
 void Move::Init(char origin, char destination, char flags, char capture)
 {
