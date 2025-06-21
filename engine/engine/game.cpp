@@ -6,30 +6,30 @@
 
 //codes for each piece
 //first 3 bits:
-#define KING 0x0
 #define QUEEN 0x1
 #define PAWN 0x2
 #define ROOK 0x3
 #define KNIGHT 0x4
 #define BISHOP 0x5
+#define KING 0x6
 
 #define WHITE 0x8 //4th bit
 #define EMPTY 0x10 //5th bit
 #define OUTOFBOUND 0x20 //6th bit
 
 //first 4 bits
-#define WKING 0x8
 #define WQUEEN 0x9
 #define WPAWN 0xA
 #define WROOK 0xB
 #define WKNIGHT 0xC
 #define WBISHOP 0xD
-#define BKING 0x0
+#define WKING 0xE
 #define BQUEEN 0x1
 #define BPAWN 0x2
 #define BROOK 0x3
 #define BKNIGHT 0x4
 #define BBISHOP 0x5
+#define BKING 0x6
 
 //moveTypes
 #define QUIETMOVE 0x0
@@ -109,7 +109,20 @@ bool Game::RevertMove()
 	return 1;
 }
 
-std::vector<Move> Game::GetLegalMoves()
+bool Game::IsCheck()
+{
+	std::vector moves = Game::GetAllMoves();
+	for (int i = 0; i < moves.size(); i++)
+	{
+		if ((moves[i].capture & 0b111) == KING)
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+std::vector<Move> Game::GetAllMoves()
 {
 	std::vector<Move> moveList;
 
@@ -224,6 +237,22 @@ std::vector<Move> Game::GetLegalMoves()
 	}
 
 	return moveList;
+}
+
+std::vector<Move> Game::GetLegalMoves()
+{
+	std::vector<Move> legalMoves = Game::GetAllMoves();
+	for (int i = 0; i < legalMoves.size(); i++)
+	{
+		Game::MakeMove(legalMoves[i]);
+		if (IsCheck())
+		{
+			legalMoves.erase(legalMoves.begin() + i);
+			i--;
+		}
+		Game::RevertMove();
+	}
+	return legalMoves;
 }
 
 unsigned char* printPosition(unsigned char* pos)

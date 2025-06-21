@@ -18,6 +18,8 @@ public:
 	Game();
 	bool MakeMove(Move move);
 	bool RevertMove();
+	bool IsCheck();
+	std::vector<Move> GetAllMoves();
 	std::vector<Move> GetLegalMoves();
 
 	bool toMove; // 1 for white / 0 for black
