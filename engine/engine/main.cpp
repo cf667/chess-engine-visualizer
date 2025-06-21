@@ -12,13 +12,19 @@ int test[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 int main() {
     std::cout << test << std::endl;
 
-    Game game;
+    Game game("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ");
     printPosition(game.position);
     std::vector<Move> moveList = game.GetLegalMoves();
     for (int i = 0; i < moveList.size(); i++)
     {
         std::cout << std::endl << int(moveList[i].origin) << " " << int(moveList[i].destination);
     }
+    printPosition(game.position);
+    std::cout << std::endl;
+    std::cout << "toMove: " << int(game.toMove) << std::endl;
+    std::cout << "castling: " << int(game.castlingAbility) << std::endl;
+    std::cout << "enPassant: " << int(game.enPassantTarget) << std::endl;
+    std::cout << "moves: " << int(game.halfMoveCounter) << std::endl;
 
     // INIT SOCKETS
 

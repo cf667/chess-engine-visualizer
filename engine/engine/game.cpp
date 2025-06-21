@@ -98,7 +98,126 @@ Game::Game()
 
 Game::Game(const char* fen)
 {
+	//todo: init these game rules
+	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(Game::position));
 
+	int curPos = 0;
+	for (int i = 2; i < 10; i++) //ranks
+	{
+		for (int j = 1; j < 9; j++) //files
+		{
+			switch (fen[curPos])
+			{
+				//pieces
+			case 'Q':
+				position[i * 10 + j] = WQUEEN;
+				break;
+			case 'P':
+				position[i * 10 + j] = WPAWN;
+				break;
+			case 'R':
+				position[i * 10 + j] = WROOK;
+				break;
+			case 'N':
+				position[i * 10 + j] = WKNIGHT;
+				break;
+			case 'B':
+				position[i * 10 + j] = WBISHOP;
+				break;
+			case 'K':
+				position[i * 10 + j] = WKING;
+				break;
+			case 'q':
+				position[i * 10 + j] = BQUEEN;
+				break;
+			case 'p':
+				position[i * 10 + j] = BPAWN;
+				break;
+			case 'r':
+				position[i * 10 + j] = BROOK;
+				break;
+			case 'n':
+				position[i * 10 + j] = BKNIGHT;
+				break;
+			case 'b':
+				position[i * 10 + j] = BBISHOP;
+				break;
+			case 'k':
+				position[i * 10 + j] = BKING;
+				break;
+				//next rank - isnt reached, because it loops back after 8 squares (right before the '/')
+			case '/':
+				break;
+			default:
+				for (int k = 0; k < fen[curPos] - '0'; k++) //empty squares
+				{
+					position[i * 10 + j + k] = EMPTY;
+					j++;
+				}
+				j--;
+				break;
+			}
+			curPos++;
+		}
+		curPos++;
+	}
+
+	//loop skips the space - curPos is now automatically the side to move
+	switch (fen[curPos])
+	{
+	case 'w':
+		Game::toMove = 1;
+		break;
+	case 'b':
+		Game::toMove = 0;
+		break;
+	}
+	curPos = curPos + 2;
+
+	//castling ability
+	Game::castlingAbility = 0x0;
+	if (fen[curPos] == '-') //no castle allowed
+	{
+		curPos = curPos + 2;
+		goto skipCastles;
+	}
+
+	if (fen[curPos] == 'K')
+	{
+		Game::castlingAbility = Game::castlingAbility + WKCASTLE;
+		curPos++;
+	}
+	if (fen[curPos] == 'Q')
+	{
+		Game::castlingAbility = Game::castlingAbility + WQCASTLE;
+		curPos++;
+	}
+	if (fen[curPos] == 'k')
+	{
+		Game::castlingAbility = Game::castlingAbility + BKCASTLE;
+		curPos++;
+	}
+	if (fen[curPos] == 'q')
+	{
+		Game::castlingAbility = Game::castlingAbility + BQCASTLE;
+		curPos++;
+	}
+	curPos++;
+skipCastles:
+
+	//en passant targe square
+	if (fen[curPos] == '-') //no target
+	{
+		Game::enPassantTarget = 0;
+		curPos = curPos + 2;
+		goto skipEnPassant;
+	}
+
+	Game::enPassantTarget = ((fen[curPos] - 'a' + 2) * 10) + (fen[curPos] - '0' + 1); //convert normal coordinates to index in 10x12 position array
+	curPos = curPos + 3;
+skipEnPassant:
+
+	Game::halfMoveCounter = fen[curPos] - '0';
 }
 
 bool Game::MakeMove(Move move)
@@ -274,7 +393,7 @@ unsigned char* printPosition(unsigned char* pos)
 	unsigned char result[64];
 	for (int i = 2; i < 10; i++)
 	{
-		std::copy(startingPos + i * 10 + 1, startingPos + i * 10 + 9, result + (i - 2) * 8);
+		std::copy(pos + i * 10 + 1, pos + i * 10 + 9, result + (i - 2) * 8);
 	}
 
 	for (int i = 0; i < 64; i++)
