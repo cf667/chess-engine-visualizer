@@ -48,10 +48,10 @@
 #define PROMOTION_QUEEN_CAPTURE 0xF
 
 //castling ability
-#define WKCASTLE 0x1 //white king side - 1st bit
-#define WQCASTLE 0x2 //white queen side - 2nd bit
-#define BKCASTLE 0x4 //black king side - 3rd bit
-#define BQCASTLE 0x8 //black queen side - 4th bit
+#define BKCASTLE 0x1 //white king side - 1st bit
+#define BQCASTLE 0x2 //white queen side - 2nd bit
+#define WKCASTLE 0x4 //black king side - 3rd bit
+#define WQCASTLE 0x8 //black queen side - 4th bit
 
 //position at the start of every game
 const unsigned char startingPos[120] =
@@ -410,6 +410,42 @@ std::vector<Move> Game::GetAllMoves()
 						curMove.Init(i, i + offset, QUIETMOVE, EMPTY);
 						moveList.push_back(curMove);
 						curMoveIndex++;
+
+						//castling
+						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1)) //if king moves right/left, ...
+						{
+							Game::toMove = !Game::toMove;
+							if (Game::IsCheck()) //... isnt in check right now ...
+							{
+								Game::toMove = !Game::toMove;
+								goto skipCastle;
+							}
+							Game::toMove = !Game::toMove;
+
+							Game::MakeMove(curMove);
+							if (!Game::IsCheck() && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
+							{
+								int flag = CASTLE_KING;
+								if (offset == -1)
+								{
+									flag = CASTLE_QUEEN;
+								}
+								int temp = 0; //need for castle ability check
+								if (flag == CASTLE_QUEEN)
+								{
+									temp = 1;
+								}
+
+								if ((Game::gameRules.castlingAbility >> (Game::toMove * 2 + temp)) & 1) //check castle ability
+								{
+									curMove.Init(i, i + offset * 2, flag, EMPTY);
+									moveList.push_back(curMove);
+									curMoveIndex++;
+								}
+							}
+						skipCastle:
+							;
+						}
 					}
 					else if (((Game::position[i + offset] >> 3) & 1) != Game::toMove) //enemy piece
 					{
