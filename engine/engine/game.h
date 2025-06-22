@@ -12,25 +12,35 @@ public:
 	char capture = -1;
 };
 
+class GameRules
+{
+public:
+	GameRules();
+
+	char enPassantTarget;
+	char castlingAbility;
+	char halfMoveCounter; //for 50 move rule
+};
+
 class Game
 {
 public:
 	Game();
 	Game(const char* fen); //import position in FEN-notation
+
+	//game rules
+	unsigned char position[120]; //10x12
+	bool toMove; // 1 for white / 0 for black
+	GameRules gameRules;
+
 	bool MakeMove(Move move);
 	bool RevertMove();
 	bool IsCheck();
 	std::vector<Move> GetAllMoves();
 	std::vector<Move> GetLegalMoves();
 
-	//game rules
-	unsigned char position[120]; //10x12
-	bool toMove; // 1 for white / 0 for black
-	char enPassantTarget;
-	char castlingAbility;
-	char halfMoveCounter; //for 50 move rule
-
 	std::vector<Move> moveHist;
+	std::vector<GameRules> ruleHist;
 };
 
 unsigned char* printPosition(unsigned char* pos);

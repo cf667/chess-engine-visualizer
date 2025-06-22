@@ -22,9 +22,9 @@ int main() {
     printPosition(game.position);
     std::cout << std::endl;
     std::cout << "toMove: " << int(game.toMove) << std::endl;
-    std::cout << "castling: " << int(game.castlingAbility) << std::endl;
-    std::cout << "enPassant: " << int(game.enPassantTarget) << std::endl;
-    std::cout << "moves: " << int(game.halfMoveCounter) << std::endl;
+    std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
+    std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
+    std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;
 
     // INIT SOCKETS
 

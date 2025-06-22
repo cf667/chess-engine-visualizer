@@ -87,13 +87,17 @@ void Move::Init(char origin, char destination, char flags, char capture)
 	Move::capture = capture;
 }
 
+GameRules::GameRules()
+{
+	GameRules::enPassantTarget = 0;
+	GameRules::castlingAbility = 0xF; //0b1111 - every castle allowed
+	GameRules::halfMoveCounter = 0;
+}
+
 Game::Game()
 {
 	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(Game::position));
 	Game::toMove = 1;
-	Game::enPassantTarget = 0;
-	Game::castlingAbility = 0xF; //0b1111 - every castle allowed
-	Game::halfMoveCounter = 0;
 }
 
 Game::Game(const char* fen)
@@ -174,7 +178,7 @@ Game::Game(const char* fen)
 	curPos = curPos + 2;
 
 	//castling ability
-	Game::castlingAbility = 0x0;
+	Game::gameRules.castlingAbility = 0x0;
 	if (fen[curPos] == '-') //no castle allowed
 	{
 		curPos = curPos + 2;
@@ -183,22 +187,22 @@ Game::Game(const char* fen)
 
 	if (fen[curPos] == 'K')
 	{
-		Game::castlingAbility = Game::castlingAbility + WKCASTLE;
+		Game::gameRules.castlingAbility = Game::gameRules.castlingAbility + WKCASTLE;
 		curPos++;
 	}
 	if (fen[curPos] == 'Q')
 	{
-		Game::castlingAbility = Game::castlingAbility + WQCASTLE;
+		Game::gameRules.castlingAbility = Game::gameRules.castlingAbility + WQCASTLE;
 		curPos++;
 	}
 	if (fen[curPos] == 'k')
 	{
-		Game::castlingAbility = Game::castlingAbility + BKCASTLE;
+		Game::gameRules.castlingAbility = Game::gameRules.castlingAbility + BKCASTLE;
 		curPos++;
 	}
 	if (fen[curPos] == 'q')
 	{
-		Game::castlingAbility = Game::castlingAbility + BQCASTLE;
+		Game::gameRules.castlingAbility = Game::gameRules.castlingAbility + BQCASTLE;
 		curPos++;
 	}
 	curPos++;
@@ -207,20 +211,22 @@ skipCastles:
 	//en passant targe square
 	if (fen[curPos] == '-') //no target
 	{
-		Game::enPassantTarget = 0;
+		Game::gameRules.enPassantTarget = 0;
 		curPos = curPos + 2;
 		goto skipEnPassant;
 	}
 
-	Game::enPassantTarget = ((fen[curPos] - 'a' + 2) * 10) + (fen[curPos] - '0' + 1); //convert normal coordinates to index in 10x12 position array
+	Game::gameRules.enPassantTarget = ((fen[curPos] - 'a' + 2) * 10) + (fen[curPos] - '0' + 1); //convert normal coordinates to index in 10x12 position array
 	curPos = curPos + 3;
 skipEnPassant:
 
-	Game::halfMoveCounter = fen[curPos] - '0';
+	Game::gameRules.halfMoveCounter = fen[curPos] - '0';
 }
 
 bool Game::MakeMove(Move move)
 {
+	ruleHist.push_back(Game::gameRules);
+
 	position[move.destination] = position[move.origin];
 	position[move.origin] = EMPTY;
 
@@ -232,12 +238,12 @@ bool Game::MakeMove(Move move)
 
 	if (move.flags == DOUBLEPAWNPUSH)
 	{
-		if (toMove) { Game::enPassantTarget = move.destination + 10; }
-		else { Game::enPassantTarget = move.destination - 10; }
+		if (toMove) { Game::gameRules.enPassantTarget = move.destination + 10; }
+		else { Game::gameRules.enPassantTarget = move.destination - 10; }
 	}
 	else
 	{
-		Game::enPassantTarget = 0;
+		Game::gameRules.enPassantTarget = 0;
 	}
 
 	moveHist.push_back(move);
@@ -253,7 +259,7 @@ bool Game::RevertMove()
 
 	if (moveHist.back().flags == ENPASSANT)
 	{
-		if (toMove) 
+		if (toMove)
 		{ 
 			position[moveHist.back().destination + 10] = moveHist.back().capture; 
 			position[moveHist.back().destination] = EMPTY;
@@ -267,15 +273,8 @@ bool Game::RevertMove()
 
 	moveHist.pop_back();
 
-	if (moveHist.back().flags == DOUBLEPAWNPUSH)
-	{
-		if (toMove) { Game::enPassantTarget = moveHist.back().destination + 10; }
-		else { Game::enPassantTarget = moveHist.back().destination - 10; }
-	}
-	else
-	{
-		Game::enPassantTarget = 0;
-	}
+	Game::gameRules = Game::ruleHist.back();
+	Game::ruleHist.pop_back();
 
 	Game::toMove = !Game::toMove;
 
@@ -359,13 +358,13 @@ std::vector<Move> Game::GetAllMoves()
 			}
 
 			//en passant
-			if (i + pawnOffset + 1 == Game::enPassantTarget) //right side en passant
+			if (i + pawnOffset + 1 == Game::gameRules.enPassantTarget) //right side en passant
 			{
 				curMove.Init(i, i + pawnOffset + 1, ENPASSANT, Game::position[i + 1]);
 				moveList.push_back(curMove);
 				curMoveIndex++;
 			}
-			else if (i + pawnOffset - 1 == Game::enPassantTarget) //left side en passant
+			else if (i + pawnOffset - 1 == Game::gameRules.enPassantTarget) //left side en passant
 			{
 				curMove.Init(i, i + pawnOffset - 1, ENPASSANT, Game::position[i - 1]);
 				moveList.push_back(curMove);
