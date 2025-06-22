@@ -224,6 +224,22 @@ bool Game::MakeMove(Move move)
 	position[move.destination] = position[move.origin];
 	position[move.origin] = EMPTY;
 
+	if (move.flags == ENPASSANT)
+	{
+		if(toMove) { position[move.destination + 10] = EMPTY; }
+		else { position[move.destination - 10] = EMPTY; }
+	}
+
+	if (move.flags == DOUBLEPAWNPUSH)
+	{
+		if (toMove) { Game::enPassantTarget = move.destination + 10; }
+		else { Game::enPassantTarget = move.destination - 10; }
+	}
+	else
+	{
+		Game::enPassantTarget = 0;
+	}
+
 	moveHist.push_back(move);
 	Game::toMove = !Game::toMove;
 
@@ -235,7 +251,32 @@ bool Game::RevertMove()
 	position[moveHist.back().origin] = position[moveHist.back().destination];
 	position[moveHist.back().destination] = moveHist.back().capture;
 
+	if (moveHist.back().flags == ENPASSANT)
+	{
+		if (toMove) 
+		{ 
+			position[moveHist.back().destination + 10] = moveHist.back().capture; 
+			position[moveHist.back().destination] = EMPTY;
+		}
+		else 
+		{ 
+			position[moveHist.back().destination - 10] = moveHist.back().capture; 
+			position[moveHist.back().destination] = EMPTY;
+		}
+	}
+
 	moveHist.pop_back();
+
+	if (moveHist.back().flags == DOUBLEPAWNPUSH)
+	{
+		if (toMove) { Game::enPassantTarget = moveHist.back().destination + 10; }
+		else { Game::enPassantTarget = moveHist.back().destination - 10; }
+	}
+	else
+	{
+		Game::enPassantTarget = 0;
+	}
+
 	Game::toMove = !Game::toMove;
 
 	return 1;
