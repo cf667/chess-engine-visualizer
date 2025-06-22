@@ -245,6 +245,74 @@ bool Game::MakeMove(Move move)
 	{
 		Game::gameRules.enPassantTarget = 0;
 	}
+	
+	//castle
+	if (move.flags == CASTLE_KING)
+	{
+		position[move.destination - 1] = position[move.destination + 1];
+		position[move.destination + 1] = EMPTY;
+		if (Game::toMove) //remove castle ability
+		{
+			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0xC;
+		}
+		else
+		{
+			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0x3;
+		}
+	}
+	else if (move.flags == CASTLE_QUEEN)
+	{
+		position[move.destination + 1] = position[move.destination - 2];
+		position[move.destination - 2] = EMPTY;
+		if (Game::toMove) //remove castle ability
+		{
+			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0xC;
+		}
+		else
+		{
+			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0x3;
+		}
+	}
+
+	switch (move.origin) //rook or king moves
+	{
+	case 28:
+		Game::gameRules.castlingAbility &= ~(1 << 0); //BK
+		break;
+	case 21:
+		Game::gameRules.castlingAbility &= ~(1 << 1); //BQ
+		break;
+	case 98:
+		Game::gameRules.castlingAbility &= ~(1 << 2); //WK
+		break;
+	case 91:
+		Game::gameRules.castlingAbility &= ~(1 << 3); //WQ
+		break;
+	case 25:
+		Game::gameRules.castlingAbility &= ~(1 << 0); //B
+		Game::gameRules.castlingAbility &= ~(1 << 1);
+		break;
+	case 95:
+		Game::gameRules.castlingAbility &= ~(1 << 2); //W
+		Game::gameRules.castlingAbility &= ~(1 << 3);
+		break;
+	}
+
+	switch (move.destination) //rook is captured
+	{
+	case 28:
+		Game::gameRules.castlingAbility &= ~(1 << 0); //BK
+		break;
+	case 21:
+		Game::gameRules.castlingAbility &= ~(1 << 1); //BQ
+		break;
+	case 98:
+		Game::gameRules.castlingAbility &= ~(1 << 2); //WK
+		break;
+	case 91:
+		Game::gameRules.castlingAbility &= ~(1 << 3); //WQ
+		break;
+	}
 
 	moveHist.push_back(move);
 	Game::toMove = !Game::toMove;
@@ -269,6 +337,18 @@ bool Game::RevertMove()
 			position[moveHist.back().destination - 10] = moveHist.back().capture; 
 			position[moveHist.back().destination] = EMPTY;
 		}
+	}
+
+	//castle
+	if (moveHist.back().flags == CASTLE_KING)
+	{
+		position[moveHist.back().destination + 1] = position[moveHist.back().destination - 1];
+		position[moveHist.back().destination - 1] = EMPTY;
+	}
+	else if (moveHist.back().flags == CASTLE_QUEEN)
+	{
+		position[moveHist.back().destination - 2] = position[moveHist.back().destination + 1];
+		position[moveHist.back().destination + 1] = EMPTY;
 	}
 
 	moveHist.pop_back();
