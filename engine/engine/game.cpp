@@ -481,7 +481,7 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 					curMoveIndex++;
 				}
 			}
-			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset - 1] >> 3) & 1) != Game::toMove) //left side capture
+			if (!((Game::position[i + pawnOffset - 1] >> 5) & 1) && !((Game::position[i + pawnOffset - 1] >> 4) & 1) && ((Game::position[i + pawnOffset - 1] >> 3) & 1) != Game::toMove) //left side capture
 			{
 				if (i > promotionRank && i < promotionRank + 9) //promotion
 				{
@@ -566,7 +566,8 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 							}
 							Game::toMove = !Game::toMove;
 
-							inCheck = Game::MakeMove(curMove);
+							Game::MakeMove(curMove);
+							inCheck = Game::IsCheck();
 							Game::RevertMove();
 							if (!inCheck && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
 							{

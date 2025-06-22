@@ -9,14 +9,17 @@
 using json = nlohmann::json;
 
 int main() {
-    Game game("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
+    Game game("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
     printPosition(game.position);
     std::cout << std::endl;
     std::cout << "toMove: " << int(game.toMove) << std::endl;
     std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
     std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
     std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;
+
     std::vector<Move> moveList = game.GetLegalMoves();
+
+    std::cout << std::endl;
     for (int i = 0; i < moveList.size(); i++)
     {
         std::cout << int(moveList[i].origin) << " " << int(moveList[i].destination) << std::endl;
