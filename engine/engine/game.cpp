@@ -98,7 +98,6 @@ Game::Game()
 
 Game::Game(const char* fen)
 {
-	//todo: init these game rules
 	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(Game::position));
 
 	int curPos = 0;
@@ -314,6 +313,20 @@ std::vector<Move> Game::GetAllMoves()
 			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset - 1] >> 3) & 1) != Game::toMove) //left side capture
 			{
 				curMove.Init(i, i + pawnOffset - 1, CAPTURE, Game::position[i + pawnOffset - 1]);
+				moveList.push_back(curMove);
+				curMoveIndex++;
+			}
+
+			//en passant
+			if (i + pawnOffset + 1 == Game::enPassantTarget) //right side en passant
+			{
+				curMove.Init(i, i + pawnOffset + 1, ENPASSANT, Game::position[i + 1]);
+				moveList.push_back(curMove);
+				curMoveIndex++;
+			}
+			else if (i + pawnOffset - 1 == Game::enPassantTarget) //left side en passant
+			{
+				curMove.Init(i, i + pawnOffset - 1, ENPASSANT, Game::position[i - 1]);
 				moveList.push_back(curMove);
 				curMoveIndex++;
 			}
