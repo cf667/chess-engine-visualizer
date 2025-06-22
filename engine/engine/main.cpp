@@ -7,24 +7,32 @@
 #include "game.h"
 
 using json = nlohmann::json;
-int test[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
 
 int main() {
-    std::cout << test << std::endl;
-
-    Game game("rnbqkbnr/pp1ppppp/8/2p5/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq - 1 2 ");
-    printPosition(game.position);
-    std::vector<Move> moveList = game.GetLegalMoves();
-    for (int i = 0; i < moveList.size(); i++)
-    {
-        std::cout << std::endl << int(moveList[i].origin) << " " << int(moveList[i].destination);
-    }
+    Game game("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
     printPosition(game.position);
     std::cout << std::endl;
     std::cout << "toMove: " << int(game.toMove) << std::endl;
     std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
     std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
     std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;
+    std::vector<Move> moveList = game.GetLegalMoves();
+    for (int i = 0; i < moveList.size(); i++)
+    {
+        std::cout << int(moveList[i].origin) << " " << int(moveList[i].destination) << std::endl;
+    }
+
+    //debug if RevertMove() works properly
+
+    /*printPosition(game.position);
+    std::cout << std::endl;
+    std::cout << "toMove: " << int(game.toMove) << std::endl;
+    std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
+    std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
+    std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;*/
+
+    std::cout << "NUM OF MOVES: " << moveList.size() << std::endl;
+
 
     // INIT SOCKETS
 

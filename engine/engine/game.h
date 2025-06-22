@@ -36,7 +36,7 @@ public:
 	bool MakeMove(Move move);
 	bool RevertMove();
 	bool IsCheck();
-	std::vector<Move> GetAllMoves();
+	std::vector<Move> GetAllMoves(bool includeCastling);
 	std::vector<Move> GetLegalMoves();
 
 	std::vector<Move> moveHist;

@@ -154,7 +154,7 @@ Game::Game(const char* fen)
 			default:
 				for (int k = 0; k < fen[curPos] - '0'; k++) //empty squares
 				{
-					position[i * 10 + j + k] = EMPTY;
+					position[i * 10 + j] = EMPTY;
 					j++;
 				}
 				j--;
@@ -385,7 +385,7 @@ bool Game::RevertMove()
 
 bool Game::IsCheck()
 {
-	std::vector moves = Game::GetAllMoves();
+	std::vector moves = Game::GetAllMoves(0);
 	for (int i = 0; i < moves.size(); i++)
 	{
 		if ((moves[i].capture & 0b111) == KING)
@@ -396,7 +396,7 @@ bool Game::IsCheck()
 	return 0;
 }
 
-std::vector<Move> Game::GetAllMoves()
+std::vector<Move> Game::GetAllMoves(bool includeCastling)
 {
 	std::vector<Move> moveList;
 
@@ -406,6 +406,8 @@ std::vector<Move> Game::GetAllMoves()
 	int pawnOffset;
 	int doublePushRank;
 	int promotionRank;
+
+	bool inCheck;
 
 	for (int i = 0; i < 120; i++) //iterate through board
 	{
@@ -554,7 +556,7 @@ std::vector<Move> Game::GetAllMoves()
 						curMoveIndex++;
 
 						//castling
-						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1)) //if king moves right/left, ...
+						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1) && includeCastling) //if king moves right/left, ...
 						{
 							Game::toMove = !Game::toMove;
 							if (Game::IsCheck()) //... isnt in check right now ...
@@ -564,8 +566,9 @@ std::vector<Move> Game::GetAllMoves()
 							}
 							Game::toMove = !Game::toMove;
 
-							Game::MakeMove(curMove);
-							if (!Game::IsCheck() && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
+							inCheck = Game::MakeMove(curMove);
+							Game::RevertMove();
+							if (!inCheck && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
 							{
 								int flag = CASTLE_KING;
 								if (offset == -1)
@@ -605,7 +608,7 @@ std::vector<Move> Game::GetAllMoves()
 
 std::vector<Move> Game::GetLegalMoves()
 {
-	std::vector<Move> legalMoves = Game::GetAllMoves();
+	std::vector<Move> legalMoves = Game::GetAllMoves(1);
 	for (int i = 0; i < legalMoves.size(); i++)
 	{
 		Game::MakeMove(legalMoves[i]);
