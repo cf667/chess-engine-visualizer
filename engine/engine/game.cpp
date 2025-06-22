@@ -245,6 +245,22 @@ bool Game::MakeMove(Move move)
 	{
 		Game::gameRules.enPassantTarget = 0;
 	}
+
+	switch (move.flags)
+	{
+	case PROMOTION_KNIGHT: case PROMOTION_KNIGHT_CAPTURE:
+		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (KNIGHT & 0b00000111);
+		break;
+	case PROMOTION_BISHOP: case PROMOTION_BISHOP_CAPTURE:
+		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (BISHOP & 0b00000111);
+		break;
+	case PROMOTION_ROOK: case PROMOTION_ROOK_CAPTURE:
+		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (ROOK & 0b00000111);
+		break;
+	case PROMOTION_QUEEN: case PROMOTION_QUEEN_CAPTURE:
+		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (QUEEN & 0b00000111);
+		break;
+	}
 	
 	//castle
 	if (move.flags == CASTLE_KING)
@@ -339,6 +355,12 @@ bool Game::RevertMove()
 		}
 	}
 
+	//promotion
+	if ((moveHist.back().flags >> 3) & 1)
+	{
+		Game::position[moveHist.back().origin] = (Game::position[moveHist.back().origin] & ~0b00000111) | (PAWN & 0b00000111);
+	}
+
 	//castle
 	if (moveHist.back().flags == CASTLE_KING)
 	{
@@ -383,6 +405,7 @@ std::vector<Move> Game::GetAllMoves()
 
 	int pawnOffset;
 	int doublePushRank;
+	int promotionRank;
 
 	for (int i = 0; i < 120; i++) //iterate through board
 	{
@@ -403,18 +426,32 @@ std::vector<Move> Game::GetAllMoves()
 			{
 				pawnOffset = -10;
 				doublePushRank = 80;
+				promotionRank = 30;
 			}
 			else
 			{
 				pawnOffset = 10;
 				doublePushRank = 30;
+				promotionRank = 80;
 			}
 			
-			if ((Game::position[i + pawnOffset] >> 4) & 1) //normal move
+			if ((Game::position[i + pawnOffset] >> 4) & 1)
 			{
-				curMove.Init(i, i + pawnOffset, QUIETMOVE, EMPTY);
-				moveList.push_back(curMove);
-				curMoveIndex++;
+				if (i > promotionRank && i < promotionRank + 9) //promotion
+				{
+					for (int promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
+					{
+						curMove.Init(i, i + pawnOffset, i, EMPTY);
+						moveList.push_back(curMove);
+						curMoveIndex++;
+					}
+				}
+				else  //normal move
+				{
+					curMove.Init(i, i + pawnOffset, QUIETMOVE, EMPTY);
+					moveList.push_back(curMove);
+					curMoveIndex++;
+				}
 
 				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnOffset * 2] >> 4) & 1) //double pawn push
 				{
@@ -426,15 +463,40 @@ std::vector<Move> Game::GetAllMoves()
 
 			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset + 1] >> 3) & 1) != Game::toMove) //right side capture
 			{
-				curMove.Init(i, i + pawnOffset + 1, CAPTURE, Game::position[i + pawnOffset + 1]);
-				moveList.push_back(curMove);
-				curMoveIndex++;
+				if (i > promotionRank && i < promotionRank + 9) //promotion
+				{
+					for (int promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
+					{
+						curMove.Init(i, i + pawnOffset + 1, promotion + CAPTURE, Game::position[i + pawnOffset + 1]);
+						moveList.push_back(curMove);
+						curMoveIndex++;
+					}
+				}
+				else
+				{
+					curMove.Init(i, i + pawnOffset + 1, CAPTURE, Game::position[i + pawnOffset + 1]);
+					moveList.push_back(curMove);
+					curMoveIndex++;
+				}
 			}
 			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset - 1] >> 3) & 1) != Game::toMove) //left side capture
 			{
-				curMove.Init(i, i + pawnOffset - 1, CAPTURE, Game::position[i + pawnOffset - 1]);
-				moveList.push_back(curMove);
-				curMoveIndex++;
+				if (i > promotionRank && i < promotionRank + 9) //promotion
+				{
+					for (int promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
+					{
+						curMove.Init(i, i + pawnOffset - 1, promotion + CAPTURE, Game::position[i + pawnOffset - 1]);
+						moveList.push_back(curMove);
+						curMoveIndex++;
+					}
+				}
+				else
+				{
+					curMove.Init(i, i + pawnOffset - 1, CAPTURE, Game::position[i + pawnOffset - 1]);
+					moveList.push_back(curMove);
+					curMoveIndex++;
+				}
+				
 			}
 
 			//en passant
