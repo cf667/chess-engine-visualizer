@@ -443,7 +443,7 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 				{
 					for (int promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
-						curMove.Init(i, i + pawnOffset, i, EMPTY);
+						curMove.Init(i, i + pawnOffset, promotion, EMPTY);
 						moveList.push_back(curMove);
 						curMoveIndex++;
 					}
