@@ -345,12 +345,12 @@ bool Game::RevertMove()
 	{
 		if (toMove)
 		{ 
-			position[moveHist.back().destination + 10] = moveHist.back().capture; 
+			position[moveHist.back().destination - 10] = moveHist.back().capture; 
 			position[moveHist.back().destination] = EMPTY;
 		}
 		else 
 		{ 
-			position[moveHist.back().destination - 10] = moveHist.back().capture; 
+			position[moveHist.back().destination + 10] = moveHist.back().capture; 
 			position[moveHist.back().destination] = EMPTY;
 		}
 	}
@@ -542,7 +542,7 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 						}
 					}
 				}
-				else //pieces which cant slide (king, knight)
+				else //pieces that cant slide (king, knight)
 				{
 					if ((Game::position[i + offset] >> 5) & 1) //out of bound
 					{
@@ -582,7 +582,8 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 									temp = 1;
 								}
 
-								if ((Game::gameRules.castlingAbility >> (Game::toMove * 2 + temp)) & 1) //check castle ability
+								if (((Game::gameRules.castlingAbility >> (Game::toMove * 2 + temp)) & 1) && //check castle ability
+									((Game::position[i + offset * 2 - temp] >> 4) & 1))							//check if squares are empty
 								{
 									curMove.Init(i, i + offset * 2, flag, EMPTY);
 									moveList.push_back(curMove);
@@ -686,7 +687,17 @@ int perft(Game game, int depth, bool first)
 	int currentResult = 0;
 
 	std::vector<Move> moveList = game.GetLegalMoves();
-	if (depth == 1) { return moveList.size(); }
+	if (depth == 1) 
+	{ 
+		if (first)
+		{
+			for (Move move : moveList)
+			{
+				std::cout << indexToCoord(move.origin) << indexToCoord(move.destination) << std::endl;
+			}
+		}
+		return moveList.size(); 
+	}
 
 	for (Move move : moveList)
 	{
@@ -694,7 +705,7 @@ int perft(Game game, int depth, bool first)
 		currentResult = perft(game, depth - 1, 0);
 		if (first)
 		{
-			std::cout << indexToCoord(move.origin) << " " << indexToCoord(move.destination) << currentResult << std::endl;
+			std::cout << indexToCoord(move.origin) << indexToCoord(move.destination) << ": " << currentResult << std::endl;
 		}
 		result += currentResult;
 		game.RevertMove();
