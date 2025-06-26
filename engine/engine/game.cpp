@@ -216,7 +216,7 @@ skipCastles:
 		goto skipEnPassant;
 	}
 
-	Game::gameRules.enPassantTarget = ((fen[curPos] - 'a' + 2) * 10) + (fen[curPos] - '0' + 1); //convert normal coordinates to index in 10x12 position array
+	Game::gameRules.enPassantTarget = coordToIndex(fen + curPos); //convert normal coordinates to index in 10x12 position array
 	curPos = curPos + 3;
 skipEnPassant:
 
@@ -413,9 +413,9 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 	{
 		if (!(i % 10))
 		{
-			std::cout << std::endl;
+			//std::cout << std::endl;
 		}
-		std::cout << i << " ";
+		//std::cout << i << " ";
 
 		if ((Game::position[i] >> 5) & 1 || (Game::position[i] >> 4) & 1 || ((Game::position[i] >> 3) & 1) != Game::toMove) //if square is out of bound, empty or piece is the wrong color
 		{
@@ -678,4 +678,39 @@ unsigned char* printPosition(unsigned char* pos)
 		}
 	}
 	return result;
+}
+
+int perft(Game game, int depth, bool first)
+{
+	int result = 0;
+	int currentResult = 0;
+
+	std::vector<Move> moveList = game.GetLegalMoves();
+	if (depth == 1) { return moveList.size(); }
+
+	for (Move move : moveList)
+	{
+		game.MakeMove(move);
+		currentResult = perft(game, depth - 1, 0);
+		if (first)
+		{
+			std::cout << indexToCoord(move.origin) << " " << indexToCoord(move.destination) << currentResult << std::endl;
+		}
+		result += currentResult;
+		game.RevertMove();
+	}
+	return result;
+}
+
+std::string indexToCoord(char i)
+{
+	std::string result = "  ";
+	result[0] = 'a' + ((i % 10) - 1);
+	result[1] = '0' + 8 - ((i / 10) - 2);
+	return result;
+}
+
+char coordToIndex(const char* c)
+{
+	return (120 - ((c[1] - '0' + 2) * 10)) + (c[0] - 'a' + 1);
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <string>
 
 class Move
 {
@@ -44,3 +45,9 @@ public:
 };
 
 unsigned char* printPosition(unsigned char* pos);
+
+int perft(Game game, int depth, bool first = 1);
+
+std::string indexToCoord(char i);
+
+char coordToIndex(const char* c);

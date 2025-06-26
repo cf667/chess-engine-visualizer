@@ -8,22 +8,23 @@
 
 using json = nlohmann::json;
 
-int main() {
-    Game game("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+int main() 
+{
+    Game game("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -");
     printPosition(game.position);
     std::cout << std::endl;
-    std::cout << "toMove: " << int(game.toMove) << std::endl;
+    /*std::cout << "toMove: " << int(game.toMove) << std::endl;
     std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
     std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
-    std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;
+    std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;*/
 
-    std::vector<Move> moveList = game.GetLegalMoves();
+    // std::vector<Move> moveList = game.GetLegalMoves();
 
-    std::cout << std::endl;
+    /*std::cout << std::endl;
     for (int i = 0; i < moveList.size(); i++)
     {
         std::cout << int(moveList[i].origin) << " " << int(moveList[i].destination) << std::endl;
-    }
+    }*/
 
     //debug if RevertMove() works properly
 
@@ -34,7 +35,7 @@ int main() {
     std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
     std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;*/
 
-    std::cout << "NUM OF MOVES: " << moveList.size() << std::endl;
+    std::cout << "\n\nmoegliche Zuege: " << perft(game, 4) << std::endl;
 
 
     // INIT SOCKETS
@@ -62,7 +63,7 @@ int main() {
         }
     }).listen(8123, [](auto* socket) {
         if (socket) {
-            std::cout << "listening on port 8123" << std::endl;
+            //std::cout << "listening on port 8123" << std::endl;
         }
         else {
             std::cerr << "error" << std::endl;
