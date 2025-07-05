@@ -2,15 +2,13 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Hello World!</title>
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
+    <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <h1>Hello World!</h1>
-    <p>
-        We are using Node.js <span id="node-version"></span>,
-        Chromium <span id="chrome-version"></span>,
-        and Electron <span id="electron-version"></span>.
-    </p>
+<body class="flex items-center justify-center h-screen w-screen bg-neutral-900">
+  <div id="chessboard" class="grid grid-cols-8 grid-rows-8 aspect-square w-full max-w-[90vmin] border-4 border-neutral-100">
+    <!-- Felder werden per JS gefüllt -->
+  </div>
+  <script src="renderer.js"></script>
 </body>
 </html>

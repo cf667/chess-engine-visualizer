@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+.square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.square img {
+  max-width: 90%;
+  max-height: 90%;
+}
