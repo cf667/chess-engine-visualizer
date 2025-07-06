@@ -44,10 +44,10 @@ public:
 	std::vector<GameRules> ruleHist;
 };
 
-unsigned char* printPosition(unsigned char* pos);
+unsigned char* PrintPosition(unsigned char* pos);
 
-int perft(Game game, int depth, bool first = 1);
+int Perft(Game game, int depth, bool first = 1);
 
-std::string indexToCoord(char i);
+std::string IndexToCoord(char i);
 
-char coordToIndex(const char* c);
+char CoordToIndex(const char* c);

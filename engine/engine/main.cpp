@@ -11,7 +11,7 @@ using json = nlohmann::json;
 int main() 
 {
     Game game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
-    printPosition(game.position);
+    PrintPosition(game.position);
     std::cout << std::endl;
     /*std::cout << "toMove: " << int(game.toMove) << std::endl;
     std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
@@ -35,7 +35,7 @@ int main()
     std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
     std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;*/
 
-    std::cout << "\n\nmoegliche Zuege: " << perft(game, 4) << std::endl;
+    std::cout << "\n\nmoegliche Zuege: \n" << Perft(game, 4) << std::endl;
 
 
     // INIT SOCKETS

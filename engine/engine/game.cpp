@@ -216,7 +216,7 @@ skipCastles:
 		goto skipEnPassant;
 	}
 
-	Game::gameRules.enPassantTarget = coordToIndex(fen + curPos); //convert normal coordinates to index in 10x12 position array
+	Game::gameRules.enPassantTarget = CoordToIndex(fen + curPos); //convert normal coordinates to index in 10x12 position array
 	curPos = curPos + 3;
 skipEnPassant:
 
@@ -624,7 +624,7 @@ std::vector<Move> Game::GetLegalMoves()
 	return legalMoves;
 }
 
-unsigned char* printPosition(unsigned char* pos)
+unsigned char* PrintPosition(unsigned char* pos)
 {
 	unsigned char result[64];
 	for (int i = 2; i < 10; i++)
@@ -681,7 +681,7 @@ unsigned char* printPosition(unsigned char* pos)
 	return result;
 }
 
-int perft(Game game, int depth, bool first)
+int Perft(Game game, int depth, bool first)
 {
 	int result = 0;
 	int currentResult = 0;
@@ -693,7 +693,7 @@ int perft(Game game, int depth, bool first)
 		{
 			for (Move move : moveList)
 			{
-				std::cout << indexToCoord(move.origin) << indexToCoord(move.destination) << std::endl;
+				std::cout << IndexToCoord(move.origin) << IndexToCoord(move.destination) << std::endl;
 			}
 		}
 		return moveList.size(); 
@@ -702,10 +702,10 @@ int perft(Game game, int depth, bool first)
 	for (Move move : moveList)
 	{
 		game.MakeMove(move);
-		currentResult = perft(game, depth - 1, 0);
+		currentResult = Perft(game, depth - 1, 0);
 		if (first)
 		{
-			std::cout << indexToCoord(move.origin) << indexToCoord(move.destination) << ": " << currentResult << std::endl;
+			std::cout << IndexToCoord(move.origin) << IndexToCoord(move.destination) << ": " << currentResult << std::endl;
 		}
 		result += currentResult;
 		game.RevertMove();
@@ -713,7 +713,7 @@ int perft(Game game, int depth, bool first)
 	return result;
 }
 
-std::string indexToCoord(char i)
+std::string IndexToCoord(char i)
 {
 	std::string result = "  ";
 	result[0] = 'a' + ((i % 10) - 1);
@@ -721,7 +721,7 @@ std::string indexToCoord(char i)
 	return result;
 }
 
-char coordToIndex(const char* c)
+char CoordToIndex(const char* c)
 {
 	return (120 - ((c[1] - '0' + 2) * 10)) + (c[0] - 'a' + 1);
 }

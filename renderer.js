@@ -1,6 +1,10 @@
+// RENDERING
+
+//board
+
 const boardElement = document.getElementById("chessboard");
 
-const position =
+const startPosition =
 [ 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 
   0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 
   0x20, 0x3,  0x4,  0x5,  0x1,  0x6,  0x5,  0x4,  0x3,  0x20, 
@@ -12,30 +16,49 @@ const position =
   0x20, 0xA,  0xA,  0xA,  0xA,  0xA,  0xA,  0xA,  0xA,  0x20, 
   0x20, 0xB,  0xC,  0xD,  0x9,  0xE,  0xD,  0xC,  0xB,  0x20, 
   0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 
-  0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20  ] //Startposition
+  0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20  ]; //starting position
 
 const imageNames = ["", "bQ", "bP", "bR", "bN", "bB", "bK", "", "", "wQ", "wP", "wR", "wN", "wB", "wK"];
 
 const darkSquareStyles = "square bg-green-700";
 const lightSquareStyles = "square bg-green-200";
 
-for (let i = 0; i < position.length; i++) {
-  const piece = position[i];
+function renderPosition(position) {
+  for (let i = 0; i < position.length; i++) {
+    const piece = position[i];
 
-  //if square is out of bound
-  if (piece === 0x20) { continue; } 
+    //if square is out of bound
+    if (piece === 0x20) { continue; } 
 
-  const div = document.createElement("div");
-  if ((i + i / 10) % 2 > 1) { div.className = lightSquareStyles; }
-  else { div.className = darkSquareStyles; }
+    const div = document.createElement("div");
+    if ((i + i / 10) % 2 > 1) { div.className = lightSquareStyles; }
+    else { div.className = darkSquareStyles; }
 
-  //if square is not empty
-  if (piece !== 0x10) {
-    const img = document.createElement("img");
-    img.src = `img/${imageNames[piece]}.svg`;
-    img.alt = piece;
-    div.appendChild(img);
+    //if square is not empty
+    if (piece !== 0x10) {
+      const img = document.createElement("img");
+      img.src = `img/${imageNames[piece]}.svg`;
+      img.alt = piece;
+      div.appendChild(img);
+    }
+
+    boardElement.appendChild(div);
   }
-
-  boardElement.appendChild(div);
 }
+
+// INIT SOCKET
+
+// ws = new WebSocket("ws://localhost:8123");
+
+// ws.onopen = () => {
+//   console.log("ws open");
+//   ws.send("echo");
+// }
+
+// ws.onmessage = (event) => {
+//   console.log(event.data);
+// }
+
+// ws.onerror = (err) => {
+//   console.log(err);
+// }
