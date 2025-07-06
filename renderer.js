@@ -46,19 +46,34 @@ function renderPosition(position) {
   }
 }
 
+// MESSAGE HANDLER
+
+function messageHandler(message) {
+  if (message.id === 1) {
+    renderPosition(message.position);
+  }
+}
+
 // INIT SOCKET
 
-// ws = new WebSocket("ws://localhost:8123");
+function initSocket() {
+  let ws = new WebSocket("ws://localhost:8123");
 
-// ws.onopen = () => {
-//   console.log("ws open");
-//   ws.send("echo");
-// }
+  ws.onopen = () => {
+    console.log("ws open");
+    ws.send("send position pls");
+  }
 
-// ws.onmessage = (event) => {
-//   console.log(event.data);
-// }
+  ws.onmessage = (event) => {
+    console.log("message received");
+    console.log(event.data);
+    messageHandler(JSON.parse(event.data));
+  }
 
-// ws.onerror = (err) => {
-//   console.log(err);
-// }
+  ws.onerror = (err) => {
+    console.log(err);
+    setTimeout(initSocket, 1000);
+  }
+}
+
+initSocket();

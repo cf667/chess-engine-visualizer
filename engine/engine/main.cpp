@@ -42,12 +42,15 @@ int main()
 
     uWS::App().ws<void*>("/*", {
         .maxPayloadLength = 16 * 1024,
-        .open = [](auto* ws) {
+        .open = [&game](auto* ws) {
             std::cout << "established connection" << std::endl;
+            json message;
+            message["id"] = 1;
+            message["position"] = game.position;
+            ws->send(message.dump(), uWS::OpCode::TEXT);
         },
         .message = [](auto* ws, std::string_view message, uWS::OpCode opCode) {
             std::cout << message << std::endl;
-            ws->send(message, opCode);
         },
         .drain = [](auto* ws) {
             /* Check getBufferedAmount here */

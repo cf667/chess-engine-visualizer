@@ -7,9 +7,9 @@ const { spawn } = require("child_process");
 
 // START ENGINE
 
-// const enginePath = path.join(__dirname, "engine", "x64", "Debug", "engine.exe");
-// console.log(enginePath);
-// const engineProc = spawn(enginePath);
+const enginePath = path.join(__dirname, "engine", "x64", "Debug", "engine.exe");
+console.log(enginePath);
+const engineProc = spawn(enginePath);
 
 // CREATE WINDOW
 
@@ -38,7 +38,7 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    // engineProc.kill();
+    engineProc.kill();
     app.quit()
   }
 });
