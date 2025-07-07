@@ -2,11 +2,11 @@
 
 #include <uwebsockets/App.h>
 #include <nlohmann/json.hpp>
+using json = nlohmann::json;
 #include <iostream>
 
 #include "game.h"
-
-using json = nlohmann::json;
+#include "util.h"
 
 int main() 
 {
@@ -48,6 +48,7 @@ int main()
             message["id"] = 1;
             message["position"] = game.position;
             ws->send(message.dump(), uWS::OpCode::TEXT);
+            Log("log this", ws);
         },
         .message = [](auto* ws, std::string_view message, uWS::OpCode opCode) {
             std::cout << message << std::endl;

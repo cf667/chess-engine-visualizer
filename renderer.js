@@ -49,7 +49,10 @@ function renderPosition(position) {
 // MESSAGE HANDLER
 
 function messageHandler(message) {
-  if (message.id === 1) {
+  if (message.id === 0) {
+    console.log(message.log);
+  }
+  else if (message.id === 1) {
     renderPosition(message.position);
   }
 }
@@ -77,3 +80,5 @@ function initSocket() {
 }
 
 initSocket();
+
+console.log("NOW")
