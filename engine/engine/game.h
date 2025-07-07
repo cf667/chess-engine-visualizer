@@ -44,9 +44,9 @@ public:
 	std::vector<GameRules> ruleHist;
 };
 
-unsigned char* PrintPosition(unsigned char* pos);
+void PrintPosition(unsigned char* pos);
 
-int Perft(Game game, int depth, bool first = 1);
+size_t Perft(Game game, int depth, bool first = 1);
 
 std::string IndexToCoord(char i);
 

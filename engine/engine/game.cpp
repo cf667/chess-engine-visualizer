@@ -4,6 +4,8 @@
 #include <iostream>
 #include <bitset>
 
+#pragma warning(push, 4)
+
 //codes for each piece
 //first 3 bits:
 #define QUEEN 0x1
@@ -79,12 +81,12 @@ const std::vector<char> bishopOffset =	{ -11, -9, 9, 11 };
 
 const std::vector<std::vector<char>> offsets = { pawnOffset, queenOffset, pawnOffset, rookOffset, knightOffset, bishopOffset, kingOffset }; //pawnOffset -> NULL
 
-void Move::Init(char origin, char destination, char flags, char capture)
+void Move::Init(char from, char to, char moveFlags, char capturedPiece)
 {
-	Move::origin = origin;
-	Move::destination = destination;
-	Move::flags = flags;
-	Move::capture = capture;
+	Move::origin = from;
+	Move::destination = to;
+	Move::flags = moveFlags;
+	Move::capture = capturedPiece;
 }
 
 GameRules::GameRules()
@@ -403,13 +405,13 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 	int curMoveIndex = 0;
 	Move curMove;
 
-	int pawnOffset;
+	char pawnDirection;
 	int doublePushRank;
 	int promotionRank;
 
 	bool inCheck;
 
-	for (int i = 0; i < 120; i++) //iterate through board
+	for (char i = 0; i < 120; i++) //iterate through board
 	{
 		if (!(i % 10))
 		{
@@ -426,75 +428,75 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 		{
 			if ((Game::position[i] >> 3) & 1) //check for color
 			{
-				pawnOffset = -10;
+				pawnDirection = -10;
 				doublePushRank = 80;
 				promotionRank = 30;
 			}
 			else
 			{
-				pawnOffset = 10;
+				pawnDirection = 10;
 				doublePushRank = 30;
 				promotionRank = 80;
 			}
 			
-			if ((Game::position[i + pawnOffset] >> 4) & 1)
+			if ((Game::position[i + pawnDirection] >> 4) & 1)
 			{
 				if (i > promotionRank && i < promotionRank + 9) //promotion
 				{
-					for (int promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
+					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
-						curMove.Init(i, i + pawnOffset, promotion, EMPTY);
+						curMove.Init(i, i + pawnDirection, promotion, EMPTY);
 						moveList.push_back(curMove);
 						curMoveIndex++;
 					}
 				}
 				else  //normal move
 				{
-					curMove.Init(i, i + pawnOffset, QUIETMOVE, EMPTY);
+					curMove.Init(i, i + pawnDirection, QUIETMOVE, EMPTY);
 					moveList.push_back(curMove);
 					curMoveIndex++;
 				}
 
-				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnOffset * 2] >> 4) & 1) //double pawn push
+				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnDirection * 2] >> 4) & 1) //double pawn push
 				{
-					curMove.Init(i, i + pawnOffset * 2, DOUBLEPAWNPUSH, EMPTY);
+					curMove.Init(i, i + pawnDirection * 2, DOUBLEPAWNPUSH, EMPTY);
 					moveList.push_back(curMove);
 					curMoveIndex++;
 				}
 			}
 
-			if (!((Game::position[i + pawnOffset + 1] >> 5) & 1) && !((Game::position[i + pawnOffset + 1] >> 4) & 1) && ((Game::position[i + pawnOffset + 1] >> 3) & 1) != Game::toMove) //right side capture
+			if (!((Game::position[i + pawnDirection + 1] >> 5) & 1) && !((Game::position[i + pawnDirection + 1] >> 4) & 1) && ((Game::position[i + pawnDirection + 1] >> 3) & 1) != Game::toMove) //right side capture
 			{
 				if (i > promotionRank && i < promotionRank + 9) //promotion
 				{
-					for (int promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
+					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
-						curMove.Init(i, i + pawnOffset + 1, promotion + CAPTURE, Game::position[i + pawnOffset + 1]);
+						curMove.Init(i, i + pawnDirection + 1, promotion + CAPTURE, Game::position[i + pawnDirection + 1]);
 						moveList.push_back(curMove);
 						curMoveIndex++;
 					}
 				}
 				else
 				{
-					curMove.Init(i, i + pawnOffset + 1, CAPTURE, Game::position[i + pawnOffset + 1]);
+					curMove.Init(i, i + pawnDirection + 1, CAPTURE, Game::position[i + pawnDirection + 1]);
 					moveList.push_back(curMove);
 					curMoveIndex++;
 				}
 			}
-			if (!((Game::position[i + pawnOffset - 1] >> 5) & 1) && !((Game::position[i + pawnOffset - 1] >> 4) & 1) && ((Game::position[i + pawnOffset - 1] >> 3) & 1) != Game::toMove) //left side capture
+			if (!((Game::position[i + pawnDirection - 1] >> 5) & 1) && !((Game::position[i + pawnDirection - 1] >> 4) & 1) && ((Game::position[i + pawnDirection - 1] >> 3) & 1) != Game::toMove) //left side capture
 			{
 				if (i > promotionRank && i < promotionRank + 9) //promotion
 				{
-					for (int promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
+					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
-						curMove.Init(i, i + pawnOffset - 1, promotion + CAPTURE, Game::position[i + pawnOffset - 1]);
+						curMove.Init(i, i + pawnDirection - (char)1, promotion + CAPTURE, Game::position[i + pawnDirection - 1]);
 						moveList.push_back(curMove);
 						curMoveIndex++;
 					}
 				}
 				else
 				{
-					curMove.Init(i, i + pawnOffset - 1, CAPTURE, Game::position[i + pawnOffset - 1]);
+					curMove.Init(i, i + pawnDirection - (char)1, CAPTURE, Game::position[i + pawnDirection - 1]);
 					moveList.push_back(curMove);
 					curMoveIndex++;
 				}
@@ -502,26 +504,26 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 			}
 
 			//en passant
-			if (i + pawnOffset + 1 == Game::gameRules.enPassantTarget) //right side en passant
+			if (i + pawnDirection + 1 == Game::gameRules.enPassantTarget) //right side en passant
 			{
-				curMove.Init(i, i + pawnOffset + 1, ENPASSANT, Game::position[i + 1]);
+				curMove.Init(i, i + pawnDirection + (char)1, ENPASSANT, Game::position[i + 1]);
 				moveList.push_back(curMove);
 				curMoveIndex++;
 			}
-			else if (i + pawnOffset - 1 == Game::gameRules.enPassantTarget) //left side en passant
+			else if (i + pawnDirection - 1 == Game::gameRules.enPassantTarget) //left side en passant
 			{
-				curMove.Init(i, i + pawnOffset - 1, ENPASSANT, Game::position[i - 1]);
+				curMove.Init(i, i + pawnDirection - (char)1, ENPASSANT, Game::position[i - 1]);
 				moveList.push_back(curMove);
 				curMoveIndex++;
 			}
 		}
 		else //every other piece
 		{
-			for (int offset : offsets[Game::position[i] & 0b111]) //iterate through moveset
+			for (char offset : offsets[Game::position[i] & 0b111]) //iterate through moveset
 			{
 				if (Game::position[i] & 1) //check if piece can slide (queen, rook, bishop)
 				{
-					for (int slide = 1; !((Game::position[i + offset * slide] >> 5) & 1); slide++) //as long as its not off the board
+					for (char slide = 1; !((Game::position[i + offset * slide] >> 5) & 1); slide++) //as long as its not off the board
 					{
 						if ((Game::position[i + offset * slide] >> 4) & 1) //empty square
 						{
@@ -571,12 +573,12 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 							Game::RevertMove();
 							if (!inCheck && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
 							{
-								int flag = CASTLE_KING;
+								char flag = CASTLE_KING;
 								if (offset == -1)
 								{
 									flag = CASTLE_QUEEN;
 								}
-								int temp = 0; //need for castle ability check
+								char temp = 0; //need for castle ability check
 								if (flag == CASTLE_QUEEN)
 								{
 									temp = 1;
@@ -624,7 +626,7 @@ std::vector<Move> Game::GetLegalMoves()
 	return legalMoves;
 }
 
-unsigned char* PrintPosition(unsigned char* pos)
+void PrintPosition(unsigned char* pos)
 {
 	unsigned char result[64];
 	for (int i = 2; i < 10; i++)
@@ -678,13 +680,14 @@ unsigned char* PrintPosition(unsigned char* pos)
 			break;
 		}
 	}
-	return result;
+	std::cout << std::endl;
+	return;
 }
 
-int Perft(Game game, int depth, bool first)
+size_t Perft(Game game, int depth, bool first)
 {
-	int result = 0;
-	int currentResult = 0;
+	size_t result = 0;
+	size_t currentResult = 0;
 
 	std::vector<Move> moveList = game.GetLegalMoves();
 	if (depth == 1) 
@@ -710,6 +713,12 @@ int Perft(Game game, int depth, bool first)
 		result += currentResult;
 		game.RevertMove();
 	}
+
+	if (first)
+	{
+		std::cout << "PERFT SUM: " << result << std::endl;
+	}
+
 	return result;
 }
 
@@ -725,3 +734,5 @@ char CoordToIndex(const char* c)
 {
 	return (120 - ((c[1] - '0' + 2) * 10)) + (c[0] - 'a' + 1);
 }
+
+#pragma warning(pop)

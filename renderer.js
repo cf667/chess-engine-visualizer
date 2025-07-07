@@ -64,11 +64,9 @@ function initSocket() {
 
   ws.onopen = () => {
     console.log("ws open");
-    ws.send("send position pls");
   }
 
   ws.onmessage = (event) => {
-    console.log("message received");
     console.log(event.data);
     messageHandler(JSON.parse(event.data));
   }
@@ -80,5 +78,3 @@ function initSocket() {
 }
 
 initSocket();
-
-console.log("NOW")
