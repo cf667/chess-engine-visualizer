@@ -8,30 +8,29 @@ const { spawn } = require("child_process");
 // START ENGINE
 
 const enginePath = path.join(__dirname, "engine", "x64", "Debug", "engine.exe");
-console.log(enginePath);
-const engineProc = spawn(enginePath);
+//const engineProc = spawn(enginePath);
 
 // GET CONSOLE OUTPUTS OF ENGINE
 
-engineProc.stdout.on("data", (data) => {
-  process.stdout.write(data);
-});
+// engineProc.stdout.on("data", (data) => {
+//   process.stdout.write(data);
+// });
 
-engineProc.stderr.on("data", (data) => {
-  console.log("ENGINE ERROR: " + data);
-});
+// engineProc.stderr.on("data", (data) => {
+//   console.log("ENGINE ERROR: " + data);
+// });
 
-engineProc.on("close", (code) => {
-  console.log("ENGINE CLOSE: " + code);
-});
+// engineProc.on("close", (code) => {
+//   console.log("ENGINE CLOSE: " + code);
+// });
 
-engineProc.on("error", (error) => {
-  console.log("ENGINE ERROR: " + error);
-});
+// engineProc.on("error", (error) => {
+//   console.log("ENGINE ERROR: " + error);
+// });
 
-engineProc.on("exit", (code) => {
-  console.log("ENGINE EXIT: " + code);
-});
+// engineProc.on("exit", (code) => {
+//   console.log("ENGINE EXIT: " + code);
+// });
 
 // CREATE WINDOW
 
@@ -60,7 +59,7 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    engineProc.kill();
+    //engineProc.kill();
     app.quit()
   }
 });

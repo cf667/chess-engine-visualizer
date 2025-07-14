@@ -24,7 +24,9 @@ std::condition_variable msgQueueReady;
 void MessageHandler(std::string msg, Game& game, uWS::WebSocket<false, true, void*>* ws, uWS::Loop* wsLoop)
 {
     json parsedMsg = json::parse(msg);
-    if (parsedMsg["id"] == 2) 
+    switch (int(parsedMsg["id"]))
+    {
+    case 2:
     {
         std::string fen = parsedMsg["fen"];
         game = Game(fen.c_str());
@@ -33,6 +35,25 @@ void MessageHandler(std::string msg, Game& game, uWS::WebSocket<false, true, voi
         message["id"] = 1;
         message["position"] = game.position;
         wsLoop->defer([ws, message]() { ws->send(message.dump(), uWS::OpCode::TEXT); });
+        break;
+    }
+    case 3:
+    {
+        char msgOrigin = uint8_t(parsedMsg["origin"]);
+        char msgDestination = uint8_t(parsedMsg["destination"]);
+
+        json message;
+        message["id"] = 1;
+        for (Move currentMove : game.GetLegalMoves())
+        {
+            if (currentMove.origin != msgOrigin || currentMove.destination != msgDestination) { continue; }
+            game.MakeMove(currentMove);
+            break;
+        }
+        message["position"] = game.position;
+        wsLoop->defer([ws, message]() { ws->send(message.dump(), uWS::OpCode::TEXT); });
+        break;
+    }
     }
 
     return;
@@ -40,37 +61,12 @@ void MessageHandler(std::string msg, Game& game, uWS::WebSocket<false, true, voi
 
 int EngineThread(uWS::WebSocket<false, true, void*>* ws, uWS::Loop* wsLoop)
 {
-    Game game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
-    PrintPosition(game.position);
-    /*std::cout << "toMove: " << int(game.toMove) << std::endl;
-    std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
-    std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
-    std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;*/
-
-    // std::vector<Move> moveList = game.GetLegalMoves();
-
-    /*std::cout << std::endl;
-    for (int i = 0; i < moveList.size(); i++)
-    {
-        std::cout << int(moveList[i].origin) << " " << int(moveList[i].destination) << std::endl;
-    }*/
-
-    //debug if RevertMove() works properly
-
-    /*printPosition(game.position);
-    std::cout << std::endl;
-    std::cout << "toMove: " << int(game.toMove) << std::endl;
-    std::cout << "castling: " << int(game.gameRules.castlingAbility) << std::endl;
-    std::cout << "enPassant: " << int(game.gameRules.enPassantTarget) << std::endl;
-    std::cout << "moves: " << int(game.gameRules.halfMoveCounter) << std::endl;*/
-
-    std::cout << "moegliche Zuege: " << std::endl;
-    Perft(game, 4, 1);
+    Game game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "); //starting position
 
     while (true)
     {
         std::unique_lock msgLock(msgQueueMutex);
-        msgQueueReady.wait(msgLock, [] { return !msgQueue.empty(); });
+        msgQueueReady.wait(msgLock, [] { return !msgQueue.empty(); }); //wait for websocket messages
 
         while (!msgQueue.empty())
         {
@@ -97,7 +93,7 @@ int main()
         (
             "/*",
             {
-                .maxPayloadLength = 16 * 1024,
+                .maxPayloadLength = 16 * 1024, //16KB
                 .open = [](auto* ws)
                 {
                     std::cout << "opened websocket connection" << std::endl;
@@ -109,13 +105,12 @@ int main()
                 {
                     ws; message; opCode;
 
+                    //send message to EngineThread
                     {
                         std::lock_guard msgLock(msgQueueMutex);
                         msgQueue.push(std::string(message));
                     }
                     msgQueueReady.notify_one();
-
-                    Log(std::string(message), ws);
                 },
                 .drain = [](auto* ws)
                 {
@@ -140,7 +135,7 @@ int main()
 
     webSocket.listen
     (
-        8123, 
+        8123, //port to listen on
         [](auto* ws)
             {
                 if (ws) {
@@ -153,8 +148,6 @@ int main()
     );
     
     webSocket.run();
-
-    std::cout << "exiting..." << std::endl;
     return 0;
 }
 
