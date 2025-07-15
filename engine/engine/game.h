@@ -1,6 +1,5 @@
 #pragma once
 #include <vector>
-#include <string>
 
 class Move
 {
@@ -44,10 +43,4 @@ public:
 	std::vector<GameRules> ruleHist;
 };
 
-void PrintPosition(unsigned char* pos);
-
 size_t Perft(Game game, int depth, bool first = 1);
-
-std::string IndexToCoord(char i);
-
-char CoordToIndex(const char* c);

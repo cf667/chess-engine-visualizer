@@ -1,63 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "game.h"
+#include "util.h"
 
-#include <algorithm>
 #include <iostream>
-#include <bitset>
 
 #pragma warning(push, 4)
 
-//codes for each piece
-//first 3 bits:
-#define QUEEN 0x1
-#define PAWN 0x2
-#define ROOK 0x3
-#define KNIGHT 0x4
-#define BISHOP 0x5
-#define KING 0x6
-
-#define WHITE 0x8 //4th bit
-#define EMPTY 0x10 //5th bit
-#define OUTOFBOUND 0x20 //6th bit
-
-//first 4 bits
-#define WQUEEN 0x9
-#define WPAWN 0xA
-#define WROOK 0xB
-#define WKNIGHT 0xC
-#define WBISHOP 0xD
-#define WKING 0xE
-#define BQUEEN 0x1
-#define BPAWN 0x2
-#define BROOK 0x3
-#define BKNIGHT 0x4
-#define BBISHOP 0x5
-#define BKING 0x6
-
-//moveTypes
-#define QUIETMOVE 0x0
-#define DOUBLEPAWNPUSH 0x1
-#define CASTLE_KING 0x2
-#define CASTLE_QUEEN 0x3
-#define CAPTURE 0x4
-#define ENPASSANT 0x5
-#define PROMOTION_KNIGHT 0x8
-#define PROMOTION_BISHOP 0x9
-#define PROMOTION_ROOK 0xA
-#define PROMOTION_QUEEN 0xB
-#define PROMOTION_KNIGHT_CAPTURE 0xC
-#define PROMOTION_BISHOP_CAPTURE 0xD
-#define PROMOTION_ROOK_CAPTURE 0xE
-#define PROMOTION_QUEEN_CAPTURE 0xF
-
-//castling ability
-#define BKCASTLE 0x1 //white king side - 1st bit
-#define BQCASTLE 0x2 //white queen side - 2nd bit
-#define WKCASTLE 0x4 //black king side - 3rd bit
-#define WQCASTLE 0x8 //black queen side - 4th bit
-
 //position at the start of every game
-const unsigned char startingPos[120] =
+constexpr unsigned char startingPos[120] =
 {	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
 	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
 	OUTOFBOUND, BROOK,		BKNIGHT,	BBISHOP,	BQUEEN,		BKING,		BBISHOP,	BKNIGHT,	BROOK,		OUTOFBOUND,
@@ -627,64 +577,6 @@ std::vector<Move> Game::GetLegalMoves()
 	return legalMoves;
 }
 
-void PrintPosition(unsigned char* pos)
-{
-	unsigned char result[64];
-	for (int i = 2; i < 10; i++)
-	{
-		std::copy(pos + i * 10 + 1, pos + i * 10 + 9, result + (i - 2) * 8);
-	}
-
-	for (int i = 0; i < 64; i++)
-	{
-		if (!(i % 8)) { std::cout << "\n"; };
-		switch (result[i])
-		{
-		case WKING:
-			std::cout << 'K';
-			break;
-		case WQUEEN:
-			std::cout << 'Q';
-			break;
-		case WPAWN:
-			std::cout << 'P';
-			break;
-		case WROOK:
-			std::cout << 'R';
-			break;
-		case WKNIGHT:
-			std::cout << 'N';
-			break;
-		case WBISHOP:
-			std::cout << 'B';
-			break;
-		case BKING:
-			std::cout << 'k';
-			break;
-		case BQUEEN:
-			std::cout << 'q';
-			break;
-		case BPAWN:
-			std::cout << 'p';
-			break;
-		case BROOK:
-			std::cout << 'r';
-			break;
-		case BKNIGHT:
-			std::cout << 'n';
-			break;
-		case BBISHOP:
-			std::cout << 'b';
-			break;
-		case EMPTY:
-			std::cout << '.';
-			break;
-		}
-	}
-	std::cout << std::endl;
-	return;
-}
-
 size_t Perft(Game game, int depth, bool first)
 {
 	size_t result = 0;
@@ -721,19 +613,6 @@ size_t Perft(Game game, int depth, bool first)
 	}
 
 	return result;
-}
-
-std::string IndexToCoord(char i)
-{
-	std::string result = "  ";
-	result[0] = 'a' + ((i % 10) - 1);
-	result[1] = '0' + 8 - ((i / 10) - 2);
-	return result;
-}
-
-char CoordToIndex(const char* c)
-{
-	return (120 - ((c[1] - '0' + 2) * 10)) + (c[0] - 'a' + 1);
 }
 
 #pragma warning(pop)
