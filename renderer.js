@@ -24,6 +24,13 @@ function sendMove() {
   ws.send(JSON.stringify(jsonMsg));
 }
 
+//send "make best move" command
+
+function sendMakeBestMove() {
+  const jsonMsg = { id: 4 };
+  ws.send(JSON.stringify(jsonMsg));
+}
+
 // INIT SOCKET
 
 let ws;
@@ -182,4 +189,13 @@ fenTextbox.addEventListener("keydown", (event) => {
   if(event.key === "Enter") {
     sendFen(fenTextbox.value);
   }
+});
+
+//make best move
+
+const makeBestMoveButton = document.getElementById("make_best_move");
+console.log("init");
+makeBestMoveButton.addEventListener("click", (event) => {
+  console.log("click");
+  sendMakeBestMove();
 });

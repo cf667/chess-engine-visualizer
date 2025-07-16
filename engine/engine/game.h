@@ -41,6 +41,8 @@ public:
 
 	std::vector<Move> moveHist;
 	std::vector<GameRules> ruleHist;
+
+	Move bestMove;
 };
 
 size_t Perft(Game game, int depth, bool first = 1);

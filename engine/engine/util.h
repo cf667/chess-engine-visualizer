@@ -38,9 +38,9 @@ constexpr bool IsWhite(unsigned char square)
 {
 	return square & 0b00001000;
 }
-constexpr signed char GetColorMultiplier(unsigned char square)
+constexpr signed char GetColorMultiplier(bool color)
 {
-	if (square & 0b00001000) { return 1; }
+	if (color) { return 1; }
 	else { return -1; }
 }
 
@@ -97,8 +97,8 @@ constexpr bool IsRunning(unsigned char gameState)
 
 constexpr int GetGameStateValue(unsigned char gameState)
 {
-	if (gameState & 0b00000010) { return INT32_MIN; }
-	if (gameState & 0b00000100) { return INT32_MAX; }
+	if (gameState & 0b00000010) { return -0x1000; }
+	if (gameState & 0b00000100) { return 0x1000; }
 	return 0;
 }
 
