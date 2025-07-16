@@ -14,6 +14,7 @@ using json = nlohmann::json;
 
 #include "game.h"
 #include "util.h"
+#include "evaluation.h"
 
 #pragma warning(push, 4)
 
@@ -61,7 +62,9 @@ void MessageHandler(std::string msg, Game& game, uWS::WebSocket<false, true, voi
 
 int EngineThread(uWS::WebSocket<false, true, void*>* ws, uWS::Loop* wsLoop)
 {
-    Game game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 "); //starting position
+    Game game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"); //starting position
+    PrintPosition(game.position);
+    std::cout << EvaluatePosition(game) << std::endl;
 
     while (true)
     {
