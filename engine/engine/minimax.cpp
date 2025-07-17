@@ -1,6 +1,9 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include "minimax.h"
 #include "evaluation.h"
 #include "util.h"
+
+#pragma warning(push, 4)
 
 int Minimax(Game& game, const unsigned int depth)
 {
@@ -28,3 +31,5 @@ int Minimax(Game& game, const unsigned int depth)
 	game.bestMove = bestMove;
 	return bestScore;
 }
+
+#pragma warning(pop)

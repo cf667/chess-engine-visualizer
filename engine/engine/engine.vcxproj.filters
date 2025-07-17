@@ -30,6 +30,12 @@
     <ClCompile Include="minimax.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="socket.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
+    <ClCompile Include="engine.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h">
@@ -42,6 +48,12 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="minimax.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="socket.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="engine.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

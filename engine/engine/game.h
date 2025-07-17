@@ -1,6 +1,8 @@
 #pragma once
 #include <vector>
 
+#include <chrono>
+
 class Move
 {
 public:
@@ -46,3 +48,5 @@ public:
 };
 
 size_t Perft(Game game, int depth, bool first = 1);
+
+extern std::chrono::duration<float> totalDuration;

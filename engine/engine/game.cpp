@@ -349,8 +349,12 @@ bool Game::IsCheck()
 	return 0;
 }
 
+std::chrono::duration<float> totalDuration = std::chrono::duration<float>(0.f);
+
 std::vector<Move> Game::GetAllMoves(bool includeCastling)
 {
+	auto timeStart = std::chrono::high_resolution_clock::now();
+
 	std::vector<Move> moveList;
 
 	int curMoveIndex = 0;
@@ -558,6 +562,9 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 		}
 	}
 
+	auto timeEnd = std::chrono::high_resolution_clock::now();
+	std::chrono::duration<float> duration = timeEnd - timeStart;
+	totalDuration += duration;
 	return moveList;
 }
 
