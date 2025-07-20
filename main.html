@@ -5,10 +5,15 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-col space-y-5 flex-auto items-center justify-center h-screen w-screen bg-neutral-900">
-  <button id="make_best_move" class="border-1 border-neutral-100 text-neutral-100">make best move</button>
-  <div id="chessboard" class="grid grid-cols-8 grid-rows-8 aspect-square w-full max-w-[90vmin] border-4 border-neutral-100"></div>
-  <input type="text" id="fen_input" placeholder="fen" class="border-1 border-neutral-100 text-neutral-100"/>
+<body class="flex flex-row items-center h-screen w-screen bg-neutral-900 border-2 border-blue-600">
+  <div id="game" class="flex flex-col justify-center items-center center gap-4 p-4 border-2 border-red-500 max-w-full w-full h-full">
+    <button id="make_best_move" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1">make best move</button>
+    <div id="chessboard" class="grid grid-cols-8 grid-rows-8 aspect-square w-[80vmin] max-h-screen border-4 border-neutral-100"></div>
+    <input type="text" id="fen_input" placeholder="fen" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1"/>
+  </div>
+  <div id="visualization" class="flex flex-grow border-2 border-red-500 items-center justify-center p-4 w-full h-full">
+    <canvas id="tree-canvas" class="border-4 border-neutral-100 max-w-full max-h-full w-full h-full"></canvas>
+  </div>
   <script src="renderer.js"></script>
 </body>
 </html>

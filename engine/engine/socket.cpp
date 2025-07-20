@@ -8,6 +8,34 @@
 uWS::WebSocket<false, true, void*>* mySocket;
 uWS::Loop* socketLoop;
 
+void SendJSON(json message)
+{
+    socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
+    return;
+}
+
+void SendNewNode(int nodeId, int depth, int parentId, std::string previousMove)
+{
+    json message;
+    message["id"] = 5;
+    message["nodeId"] = nodeId;
+    message["depth"] = depth;
+    message["parentId"] = parentId;
+    message["previousMove"] = previousMove;
+    SendJSON(message);
+    return;
+}
+
+void SendNodeScore(int nodeId, float score)
+{
+    json message;
+    message["id"] = 6;
+    message["nodeId"] = nodeId;
+    message["score"] = score;
+    SendJSON(message);
+    return;
+}
+
 void InitSocket()
 {
     auto app = uWS::App().ws<void*>

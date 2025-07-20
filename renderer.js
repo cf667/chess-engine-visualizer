@@ -3,8 +3,17 @@
 //input
 
 function inputMessageHandler(message) {
-  if (message.id === 1) {
-    renderPosition(message.position);
+  switch (message.id)
+  {
+    case 1:
+      renderPosition(message.position);
+      break;
+    case 5:
+      getNewNode(message.nodeId, message.depth, message.parentId, message.previousMove);
+      break;
+    case 6:
+      getNodeScore(message.nodeId, message.score);
+      break;
   }
 }
 
@@ -24,11 +33,30 @@ function sendMove() {
   ws.send(JSON.stringify(jsonMsg));
 }
 
-//send "make best move" command
+//send "make best move" command (ID 4)
 
 function sendMakeBestMove() {
   const jsonMsg = { id: 4 };
   ws.send(JSON.stringify(jsonMsg));
+}
+
+//get node data (ID 5 / 6)
+
+// let nodes = [
+//   { id: 1, depth: 0, parentId: 0, x: 0, y: 0, previousMove: 0, score: "no score" },
+//   { id: 2, depth: 1, parentId: 1, x: 0, y: 0, previousMove: "d2d3", score: "no score" },
+//   { id: 3, depth: 1, parentId: 1, x: 0, y: 0, previousMove: "d2d4", score: "no score" },
+//   { id: 4, depth: 2, parentId: 3, x: 0, y: 0, previousMove: "d4d5", score: "-4" },
+//   { id: 5, depth: 2, parentId: 3, x: 0, y: 0, previousMove: "d4e4", score: "5" }
+// ];
+let nodes = [];
+function getNewNode(nodeId, depth, parentId, previousMove) {
+  nodes.push({id: nodeId, depth: depth, parentId: parentId, previousMove: previousMove, score: "no score"});
+  throttledDraw();
+}
+function getNodeScore(nodeId, score) {
+  nodes.find(n => n.id === nodeId).score = score;
+  throttledDraw();
 }
 
 // INIT SOCKET
@@ -152,7 +180,127 @@ function renderPosition(position) {
 
 renderPosition(startPosition);
 
-//mouse input
+//visualization - search tree
+
+const treeCanvas = document.getElementById('tree-canvas');
+const ctx = treeCanvas.getContext('2d');
+
+let offsetX = 0, offsetY = 0, zoom = 1;
+let isDragging = false;
+let dragStart = { x: 0, y: 0 };
+
+treeCanvas.addEventListener('mousedown', e => {
+  isDragging = true;
+  dragStart = { x: e.clientX, y: e.clientY };
+});
+
+treeCanvas.addEventListener('mousemove', e => {
+  if (isDragging) {
+    offsetX += (e.clientX - dragStart.x);
+    offsetY += (e.clientY - dragStart.y);
+    dragStart = { x: e.clientX, y: e.clientY };
+    draw();
+  }
+});
+
+treeCanvas.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+treeCanvas.addEventListener('wheel', e => {
+  const delta = e.deltaY < 0 ? 1.1 : 0.9;
+  zoom *= delta;
+  draw();
+});
+
+function draw() {
+  treeCanvas.width = treeCanvas.clientWidth;
+  treeCanvas.height = treeCanvas.clientHeight;
+
+  ctx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
+  ctx.save();
+  ctx.translate(offsetX, offsetY);
+  ctx.scale(zoom, zoom);
+
+  //get amount of notes per depth
+  let nodesOnDepth = [];
+  for (const node of nodes) {
+    const currDepth = node.depth;
+    if (currDepth >= nodesOnDepth.length) {
+      nodesOnDepth.push(0);
+    }
+    nodesOnDepth[currDepth]++;
+  }
+
+  let depthIterator = [];
+  for (const depth of nodesOnDepth) {
+    depthIterator.push(1);
+  }
+
+  for (const node of nodes)
+  {
+    node.y = node.depth * 100;
+    node.x = treeCanvas.width / (nodesOnDepth[node.depth] + 1) * depthIterator[node.depth];
+    depthIterator[node.depth]++;
+
+    if (node.depth === 0)
+    {
+      continue;
+    }
+
+    const parent = nodes.find(n => n.id === node.parentId);
+
+    ctx.beginPath();
+    ctx.moveTo(node.x, node.y);
+    ctx.lineTo(parent.x, parent.y);
+    ctx.strokeStyle = 'white';
+    ctx.stroke();
+
+    //move label
+    const midX = (node.x + parent.x) / 2;
+    const midY = (node.y + parent.y) / 2;
+    ctx.fillStyle = 'gray';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(node.previousMove, midX + 5, midY - 5);
+  }
+
+  //draw edges
+  for (const node of nodes) {
+    ctx.beginPath();
+    ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
+    ctx.fillStyle = 'lightblue';
+    ctx.fill();
+    ctx.strokeStyle = 'white';
+    ctx.stroke();
+
+    if (node.score !== "no score")
+    {
+      ctx.fillStyle = 'black';
+      ctx.font = '14px sans-serif';
+      ctx.fillText(node.score, node.x - 10, node.y + 5);
+    }
+  }
+
+  ctx.restore();
+}
+
+draw();
+
+let drawCooldown = false;
+const cooldownTime = 50; // in Millisekunden (z. B. 50ms = max 20 FPS)
+
+function throttledDraw() {
+  if (drawCooldown) return; // Wenn Cooldown aktiv, überspringen
+
+  drawCooldown = true;
+  draw(); // Deine eigentliche Zeichenfunktion
+
+  setTimeout(() => {
+    drawCooldown = false; // Nach Ablauf: wieder erlaubt
+  }, cooldownTime);
+}
+
+// INPUT HANDLING
 
 document.addEventListener("mousemove", (event) => {
   if (draggedPiece) {

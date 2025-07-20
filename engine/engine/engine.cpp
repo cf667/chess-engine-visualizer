@@ -56,7 +56,7 @@ void SocketMessageHandler(std::string msg, Game& game)
     {
         if (!IsRunning(GetGameState(game))) { break; }
         auto start = std::chrono::high_resolution_clock::now();
-        Minimax(game, 3);
+        Minimax(game, 2);
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<float> duration = end - start;
         std::cout << "totalDuration: " << duration << "\n";
