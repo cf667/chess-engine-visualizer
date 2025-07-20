@@ -1,6 +1,6 @@
 {
   "name": "chess-engine-visualizer",
-  "version": "0.1.0-alpha",
+  "version": "0.1.1-alpha",
   "main": "main.js",
   "build": {
     "appId": "com.example.chessengine",
@@ -12,7 +12,8 @@
       "renderer.js",
       "img/**/*",
       "engine/x64/Release/engine.exe",
-      "engine/x64/Release/uv.dll"
+      "engine/x64/Release/uv.dll",
+      "engine/x64/Release/zlib1.dll"
     ],
     "extraResources": [
       {
@@ -22,6 +23,10 @@
       {
         "from": "engine/x64/Release/uv.dll",
         "to": "uv.dll"
+      },
+      {
+        "from": "engine/x64/Release/zlib1.dll",
+        "to": "zlib1.dll"
       }
     ],
     "win": {
