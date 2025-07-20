@@ -7,7 +7,9 @@ const { spawn } = require("child_process");
 
 // START ENGINE
 
-const enginePath = path.join(__dirname, "engine", "x64", "Release", "engine.exe");
+let enginePath;
+if(app.isPackaged) { enginePath = path.join(process.resourcesPath, "engine.exe"); }
+else { enginePath = path.join(__dirname, "engine", "x64", "Release", "engine.exe"); }
 const engineProc = spawn(enginePath);
 engineProc.stdin.write("socket\n");
 

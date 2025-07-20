@@ -1,19 +1,49 @@
 {
-  "name": "chess-engine",
+  "name": "chess-engine-visualizer",
   "version": "1.0.0",
   "main": "main.js",
+  "build": {
+    "appId": "com.example.chessengine",
+    "productName": "Chess Engine Visualizer",
+    "files": [
+      "main.js",
+      "main.html",
+      "style.css",
+      "renderer.js",
+      "img/**/*",
+      "engine/x64/Release/engine.exe",
+      "engine/x64/Release/uv.dll"
+    ],
+    "extraResources": [
+      {
+        "from": "engine/x64/Release/engine.exe",
+        "to": "engine.exe"
+      }, 
+      {
+        "from": "engine/x64/Release/uv.dll",
+        "to": "uv.dll"
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    }
+  },
   "scripts": {
     "start": "electron .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dist": "electron-builder"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Conrad Fehrke",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@tailwindcss/cli": "^4.1.11",
-    "electron": "^36.4.0",
     "electron-reload": "^2.0.0-alpha.1",
     "tailwindcss": "^4.1.11"
+  },
+  "devDependencies": {
+    "electron": "^37.2.3",
+    "electron-builder": "^26.0.12"
   }
 }
