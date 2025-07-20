@@ -22,7 +22,7 @@ void InitSocket()
 
                     std::cout << "opened websocket connection" << std::endl;
 
-                    std::thread engineThread(EngineThread);
+                    std::thread engineThread(EngineThread, false);
                     engineThread.detach();
                 },
                 .message = [](auto* ws, std::string_view message, uWS::OpCode opCode)

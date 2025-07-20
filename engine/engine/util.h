@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 
+#include "game.h"
+
 //codes for each piece
 //first 3 bits:
 constexpr unsigned char QUEEN = 0x1;
@@ -54,6 +56,19 @@ constexpr bool IsOutOfBound(unsigned char square)
 	return square & 0b00100000;
 }
 
+constexpr std::string IndexToCoord(char i)
+{
+	std::string result = "  ";
+	result[0] = 'a' + ((i % 10) - 1);
+	result[1] = '0' + 8 - ((i / 10) - 2);
+	return result;
+}
+
+constexpr char CoordToIndex(const char* c)
+{
+	return (120 - ((c[1] - '0' + 2) * 10)) + (c[0] - 'a' + 1);
+}
+
 //moveTypes
 constexpr unsigned int QUIETMOVE = 0x0;
 constexpr unsigned int DOUBLEPAWNPUSH = 0x1;
@@ -69,6 +84,77 @@ constexpr unsigned int PROMOTION_KNIGHT_CAPTURE = 0xC;
 constexpr unsigned int PROMOTION_BISHOP_CAPTURE = 0xD;
 constexpr unsigned int PROMOTION_ROOK_CAPTURE = 0xE;
 constexpr unsigned int PROMOTION_QUEEN_CAPTURE = 0xF;
+
+constexpr bool IsPromotion(unsigned char moveFlags)
+{
+	return moveFlags & 0b00001000;
+}
+
+constexpr char GetPromotionType(unsigned char moveFlags)
+{
+	return moveFlags & 0b00001011;
+}
+
+constexpr char CharToPromotionType(const char c)
+{
+	switch (c)
+	{
+	case 'n':
+		return PROMOTION_KNIGHT;
+		break;
+	case 'b':
+		return PROMOTION_BISHOP;
+		break;
+	case 'r':
+		return PROMOTION_ROOK;
+		break;
+	case 'q':
+		return PROMOTION_QUEEN;
+		break;
+	default:
+		return QUIETMOVE;
+	}
+}
+
+constexpr char PromotionTypeToChar(const char c)
+{
+	switch (c)
+	{
+	case PROMOTION_KNIGHT:
+		return 'n';
+		break;
+	case PROMOTION_BISHOP:
+		return 'b';
+		break;
+	case PROMOTION_ROOK:
+		return 'r';
+		break;
+	case PROMOTION_QUEEN:
+		return 'q';
+		break;
+	default:
+		return ' ';
+	}
+}
+
+constexpr std::string MoveToAlgebraic(Move move)
+{
+	std::string result;
+	result.append(IndexToCoord(move.origin));
+	result.append(IndexToCoord(move.destination));
+
+	if (IsPromotion(move.flags))
+	{
+		result.push_back(PromotionTypeToChar(GetPromotionType(move.flags)));
+	}
+
+	return result;
+}
+
+//constexpr Move AlgebraicToMove(std::string algebraicNotation)
+//{
+//	
+//}
 
 //castling ability
 constexpr unsigned int BKCASTLE = 0x1; //white king side - 1st bit
@@ -103,7 +189,3 @@ constexpr int GetGameStateValue(unsigned char gameState)
 }
 
 void PrintPosition(unsigned char* pos);
-
-std::string IndexToCoord(char i);
-
-char CoordToIndex(const char* c);

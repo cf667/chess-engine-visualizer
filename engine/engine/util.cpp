@@ -1,7 +1,8 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "util.h"
 
 #include <iostream>
+
+#include "util.h"
 
 #pragma warning(push, 4)
 
@@ -61,19 +62,6 @@ void PrintPosition(unsigned char* pos)
 	}
 	std::cout << std::endl;
 	return;
-}
-
-std::string IndexToCoord(char i)
-{
-	std::string result = "  ";
-	result[0] = 'a' + ((i % 10) - 1);
-	result[1] = '0' + 8 - ((i / 10) - 2);
-	return result;
-}
-
-char CoordToIndex(const char* c)
-{
-	return (120 - ((c[1] - '0' + 2) * 10)) + (c[0] - 'a' + 1);
 }
 
 #pragma warning(pop)

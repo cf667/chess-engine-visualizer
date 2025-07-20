@@ -1,8 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include "game.h"
-#include "util.h"
 
 #include <iostream>
+
+#include "game.h"
+#include "util.h"
 
 #pragma warning(push, 4)
 
@@ -58,6 +59,11 @@ Game::Game(const char* fen)
 	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(Game::position));
 
 	int curPos = 0;
+	while (fen[curPos] == ' ')
+	{
+		curPos++;
+	}
+
 	for (int i = 2; i < 10; i++) //ranks
 	{
 		for (int j = 1; j < 9; j++) //files

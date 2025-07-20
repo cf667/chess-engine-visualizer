@@ -1,5 +1,6 @@
 #pragma once
 #include <queue>
+#include <mutex>
 
 #include "game.h"
 
@@ -7,6 +8,8 @@ extern std::queue<std::string> msgQueue;
 extern std::mutex msgQueueMutex;
 extern std::condition_variable msgQueueReady;
 
-void MessageHandler(std::string msg, Game& game);
+void SocketMessageHandler(std::string msg, Game& game);
 
-int EngineThread();
+bool UCIMessageHandler(std::string message, Game& game);
+
+int EngineThread(const bool useUCI);
