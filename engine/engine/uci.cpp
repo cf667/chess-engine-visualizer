@@ -12,7 +12,7 @@
 void InitUCI()
 {
 	std::cout << "id name VEngine" << std::endl;
-	std::cout << "id author ConradF" << std::endl;
+	std::cout << "id author cf667" << std::endl;
 	std::cout << "uciok" << std::endl;
 
 	std::string currentMessage;

@@ -51,12 +51,13 @@ function sendMakeBestMove() {
 // ];
 let nodes = [];
 function getNewNode(nodeId, depth, parentId, previousMove) {
-  nodes.push({id: nodeId, depth: depth, parentId: parentId, previousMove: previousMove, score: "no score"});
-  throttledDraw();
+  nodes.push({ id: nodeId, depth: depth, parentId: parentId, previousMove: previousMove, score: "no score", childCount: 0 });
+  if (parentId) {
+    nodes.find(n => n.id === parentId).childCount++;
+  }
 }
 function getNodeScore(nodeId, score) {
   nodes.find(n => n.id === nodeId).score = score;
-  throttledDraw();
 }
 
 // INIT SOCKET
@@ -183,8 +184,9 @@ renderPosition(startPosition);
 //visualization - search tree
 
 const treeCanvas = document.getElementById('tree-canvas');
-const ctx = treeCanvas.getContext('2d');
+const context = treeCanvas.getContext('2d');
 
+//dragging and zooming
 let offsetX = 0, offsetY = 0, zoom = 1;
 let isDragging = false;
 let dragStart = { x: 0, y: 0 };
@@ -213,75 +215,175 @@ treeCanvas.addEventListener('wheel', e => {
   draw();
 });
 
+let depthInfo = [];
+let bottomNodeIterator = 1;
+
+function renderNode(node) {
+  if (depthInfo[node.depth].renderMode === "count") {
+    //count
+    node.x = null;
+    return;
+  }
+
+  node.y = node.depth * 100 / zoom;
+
+  if (!node.childCount) {
+    node.x = treeCanvas.width / (depthInfo[node.depth].totalNodes + 1) * bottomNodeIterator;
+    bottomNodeIterator++;
+
+    //draw line
+    context.beginPath();
+    context.moveTo(node.x, node.y);
+    context.lineTo(parent.x, parent.y);
+    context.strokeStyle = 'white';
+    context.stroke();
+
+    //draw node
+    if (node.renderMode === "eval") {
+      context.beginPath();
+      context.arc(node.x, node.y, 20 / zoom, 0, Math.PI * 2);
+      context.fillStyle = 'lightblue';
+      context.fill();
+
+      if (node.score !== "no score")
+      {
+        context.fillStyle = 'black';
+        context.font = `${14 / zoom}px sans-serif`;
+        context.fillText(node.score, node.x - 7 / zoom, node.y + 7 / zoom);
+      }
+    }
+    else if (node.renderMode === "dot") {
+      context.beginPath();
+      context.arc(node.x, node.y, 5 / zoom, 0, Math.PI * 2);
+      context.fillStyle = 'lightblue';
+      context.fill();
+    }
+    return;
+  }
+
+  const childNodes = nodes.filter(n => n.parentId === node.id);
+  for (const childNode of childNodes) {
+    renderNode(childNode);
+  }
+  if (childNodes[0].x === null) {
+    node.x = treeCanvas.width / (depthInfo[node.depth].totalNodes + 1) * bottomNodeIterator;
+    bottomNodeIterator++;
+  }
+  else {
+    console.log(node);
+    node.x = ((childNodes[childNodes.length - 1].x - childNodes[0].x) / 2) + childNodes[0].x;
+    for (const childNode of childNodes) {
+      context.beginPath();
+      context.moveTo(node.x, node.y);
+      context.lineTo(childNode.x, childNode.y);
+      context.strokeStyle = 'white';
+      context.lineWidth = 1 / zoom;
+      context.stroke();
+    }
+  }
+
+  //draw node
+  if (depthInfo[node.depth].renderMode === "eval") {
+    context.beginPath();
+    context.arc(node.x, node.y, 20 / zoom, 0, Math.PI * 2);
+    context.fillStyle = 'lightblue';
+    context.fill();
+
+    if (node.score !== "no score")
+    {
+      context.fillStyle = 'black';
+      context.font = `${14 / zoom}px sans-serif`;
+      context.fillText(node.score, node.x - 7 / zoom, node.y + 7 / zoom);
+    }
+  }
+  else if (depthInfo[node.depth].renderMode === "dot") {
+    context.beginPath();
+    context.arc(node.x, node.y, 5 / zoom, 0, Math.PI * 2);
+    context.fillStyle = 'lightblue';
+    context.fill();
+  }
+}
+
+//rendering
 function draw() {
   treeCanvas.width = treeCanvas.clientWidth;
   treeCanvas.height = treeCanvas.clientHeight;
 
-  ctx.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
-  ctx.save();
-  ctx.translate(offsetX, offsetY);
-  ctx.scale(zoom, zoom);
+  context.clearRect(0, 0, treeCanvas.width, treeCanvas.height);
+  context.save();
+  context.translate(offsetX, offsetY);
+  context.scale(zoom, zoom);
 
   //get amount of notes per depth
-  let nodesOnDepth = [];
+  depthInfo = [];
+  const newDepth = { totalNodes: 0, renderMode: "count", iterator: 1 };
   for (const node of nodes) {
-    const currDepth = node.depth;
-    if (currDepth >= nodesOnDepth.length) {
-      nodesOnDepth.push(0);
+    if (node.depth >= depthInfo.length) {
+      depthInfo.push({...newDepth});
     }
-    nodesOnDepth[currDepth]++;
+    depthInfo[node.depth].totalNodes++;
   }
 
-  let depthIterator = [];
-  for (const depth of nodesOnDepth) {
-    depthIterator.push(1);
-  }
-
-  for (const node of nodes)
-  {
-    node.y = node.depth * 100;
-    node.x = treeCanvas.width / (nodesOnDepth[node.depth] + 1) * depthIterator[node.depth];
-    depthIterator[node.depth]++;
-
-    if (node.depth === 0)
-    {
-      continue;
+  //get render mode for every depth
+  for (depth of depthInfo) {
+    const distanceBetweenNodes = (treeCanvas.width / depth.totalNodes) * zoom;
+    if (distanceBetweenNodes > 50) {
+      depth.renderMode = "eval";
     }
-
-    const parent = nodes.find(n => n.id === node.parentId);
-
-    ctx.beginPath();
-    ctx.moveTo(node.x, node.y);
-    ctx.lineTo(parent.x, parent.y);
-    ctx.strokeStyle = 'white';
-    ctx.stroke();
-
-    //move label
-    const midX = (node.x + parent.x) / 2;
-    const midY = (node.y + parent.y) / 2;
-    ctx.fillStyle = 'gray';
-    ctx.font = '12px sans-serif';
-    ctx.fillText(node.previousMove, midX + 5, midY - 5);
-  }
-
-  //draw edges
-  for (const node of nodes) {
-    ctx.beginPath();
-    ctx.arc(node.x, node.y, 20, 0, Math.PI * 2);
-    ctx.fillStyle = 'lightblue';
-    ctx.fill();
-    ctx.strokeStyle = 'white';
-    ctx.stroke();
-
-    if (node.score !== "no score")
-    {
-      ctx.fillStyle = 'black';
-      ctx.font = '14px sans-serif';
-      ctx.fillText(node.score, node.x - 10, node.y + 5);
+    else if (distanceBetweenNodes > 5) {
+      depth.renderMode = "dot";
     }
+    //else "count"
   }
 
-  ctx.restore();
+  if (nodes[0]) {
+    renderNode(nodes[0]);
+  }
+  bottomNodeIterator = 1;
+
+  // for (const node of nodes)
+  // {
+  //   node.y = node.depth * 100;
+  //   node.x = treeCanvas.width / (depthInfo[node.depth].totalNodes + 1) * depthInfo[node.depth].iterator;
+  //   depthInfo[node.depth].iterator++;
+
+  //   if (node.depth === 0) {
+  //     continue;
+  //   }
+
+  //   const parent = nodes.find(n => n.id === node.parentId);
+
+  //   context.beginPath();
+  //   context.moveTo(node.x, node.y);
+  //   context.lineTo(parent.x, parent.y);
+  //   context.strokeStyle = 'white';
+  //   context.stroke();
+
+  //   //move label
+  //   const midX = (node.x + parent.x) / 2;
+  //   const midY = (node.y + parent.y) / 2;
+  //   context.fillStyle = 'gray';
+  //   context.font = '12px sans-serif';
+  //   context.fillText(node.previousMove, midX + 5, midY - 5);
+  // }
+
+  // for (const node of nodes) {
+  //   context.beginPath();
+  //   context.arc(node.x, node.y, 20, 0, Math.PI * 2);
+  //   context.fillStyle = 'lightblue';
+  //   context.fill();
+  //   context.strokeStyle = 'white';
+  //   context.stroke();
+
+  //   if (node.score !== "no score")
+  //   {
+  //     context.fillStyle = 'black';
+  //     context.font = '14px sans-serif';
+  //     context.fillText(node.score, node.x - 10, node.y + 5);
+  //   }
+  // }
+
+  context.restore();
 }
 
 draw();

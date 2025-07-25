@@ -10,28 +10,33 @@
 int currentId = 1;
 int searchDepth = -1;
 
-int Minimax(Game& game, const unsigned int depth, int parentId)
+int Minimax(Game& game, const unsigned int depth, int parentId, bool visualize)
 {
-	bool isRoot = false;
-	if (searchDepth == -1) { isRoot = true; }
-
-	int nodeId = currentId;
-	currentId++;
-	if (isRoot) 
-	{ 
-		searchDepth = depth;
-		SendNewNode(nodeId, 0, 0, MoveToAlgebraic(game.moveHist.back()));
-	}
-	else
+	int nodeId;
+	bool isRoot;
+	if (visualize)
 	{
-		SendNewNode(nodeId, searchDepth - depth, parentId, MoveToAlgebraic(game.moveHist.back()));
+		isRoot = false;
+		if (searchDepth == -1) { isRoot = true; }
+
+		nodeId = currentId;
+		currentId++;
+		if (isRoot)
+		{
+			searchDepth = depth;
+			SendNewNode(nodeId, 0, 0, MoveToAlgebraic(game.moveHist.back()));
+		}
+		else
+		{
+			SendNewNode(nodeId, searchDepth - depth, parentId, MoveToAlgebraic(game.moveHist.back()));
+		}
 	}
 	
 	int colorMultiplier = GetColorMultiplier(game.toMove);
 	if (!depth) 
 	{ 
 		int score = EvaluatePosition(game);
-		SendNodeScore(nodeId, float(score));
+		if (visualize) { SendNodeScore(nodeId, float(score)); }
 		return score * colorMultiplier; //return evaluation relative to the side to move -> negative always bad / positive always good
 	} 
 
@@ -39,7 +44,7 @@ int Minimax(Game& game, const unsigned int depth, int parentId)
 	if (!IsRunning(gameState)) 
 	{ 
 		int score = GetGameStateValue(gameState);
-		SendNodeScore(nodeId, float(score));
+		if (visualize) { SendNodeScore(nodeId, float(score)); }
 		return score * colorMultiplier; 
 	}
 
@@ -50,7 +55,7 @@ int Minimax(Game& game, const unsigned int depth, int parentId)
 	for (Move move : game.GetLegalMoves())
 	{
 		game.MakeMove(move);
-		currentScore = -Minimax(game, depth - 1, nodeId); //score of best enemy move
+		currentScore = -Minimax(game, depth - 1, nodeId, visualize); //score of best enemy move
 		if (currentScore > bestScore)
 		{
 			bestScore = currentScore;
@@ -59,8 +64,11 @@ int Minimax(Game& game, const unsigned int depth, int parentId)
 		game.RevertMove();
 	}
 	game.bestMove = bestMove;
-	SendNodeScore(nodeId, float(bestScore) * colorMultiplier);
-	if (isRoot) { searchDepth = -1; }
+	if (visualize)
+	{
+		SendNodeScore(nodeId, float(bestScore) * colorMultiplier);
+		if (isRoot) { searchDepth = -1; }
+	}
 	return bestScore;
 }
 
