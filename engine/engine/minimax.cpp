@@ -11,8 +11,12 @@ int currentId = 1;
 int searchDepth = -1;
 int totalNodesSearched;
 
-int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int parentId, bool visualize)
+int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int parentId, bool visualize, std::optional<std::chrono::steady_clock::time_point> deadline)
 {
+	if (deadline.has_value() && std::chrono::steady_clock::now() >= deadline.value()) 
+	{ 
+		return BREAK_SEARCH; 
+	}
 	totalNodesSearched++;
 	int nodeId = 0;
 	bool isRoot;
@@ -50,15 +54,16 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 		return score * colorMultiplier; 
 	}
 
-	//because the evaluation ist always relative, each side always wants to maximize their score (black would typically want to minimize)
+	//because the evaluation is always relative, each side always wants to maximize their score (black would typically want to minimize)
 	int bestScore = INT32_MIN;
 	Move bestMove;
 	int currentScore;
 	for (Move move : game.GetLegalMoves())
 	{
 		game.MakeMove(move);
-		currentScore = -Minimax(game, depth - 1, -beta, -alpha, nodeId, visualize); //score of best enemy move
+		currentScore = -Minimax(game, depth - 1, -beta, -alpha, nodeId, visualize, deadline); //score of best enemy move
 		game.RevertMove();
+		if (currentScore == BREAK_SEARCH) { return BREAK_SEARCH; }
 
 		/*if (currentScore >= beta)
 		{

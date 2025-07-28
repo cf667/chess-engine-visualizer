@@ -188,4 +188,6 @@ constexpr int GetGameStateValue(unsigned char gameState)
 	return 0;
 }
 
+constexpr int BREAK_SEARCH = 0x10001;
+
 void PrintPosition(unsigned char* pos);

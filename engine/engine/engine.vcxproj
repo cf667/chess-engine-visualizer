@@ -134,6 +134,7 @@
     <ClCompile Include="engine.cpp" />
     <ClCompile Include="evaluation.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="iterative_deepening.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="minimax.cpp" />
     <ClCompile Include="socket.cpp" />
@@ -144,6 +145,7 @@
     <ClInclude Include="engine.h" />
     <ClInclude Include="evaluation.h" />
     <ClInclude Include="game.h" />
+    <ClInclude Include="iterative_deepening.h" />
     <ClInclude Include="minimax.h" />
     <ClInclude Include="socket.h" />
     <ClInclude Include="uci.h" />
