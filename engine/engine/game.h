@@ -47,6 +47,6 @@ public:
 	Move bestMove;
 };
 
-size_t Perft(Game game, int depth, bool first = 1);
+size_t Perft(Game& game, int depth, bool first = 1);
 
 extern std::chrono::duration<float> totalDuration;

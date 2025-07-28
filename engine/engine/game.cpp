@@ -590,7 +590,7 @@ std::vector<Move> Game::GetLegalMoves()
 	return legalMoves;
 }
 
-size_t Perft(Game game, int depth, bool first)
+size_t Perft(Game& game, int depth, bool first)
 {
 	size_t result = 0;
 	size_t currentResult = 0;
