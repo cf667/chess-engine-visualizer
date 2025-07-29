@@ -63,7 +63,7 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 		game.MakeMove(move);
 		currentScore = -Minimax(game, depth - 1, -beta, -alpha, nodeId, visualize, deadline); //score of best enemy move
 		game.RevertMove();
-		if (currentScore == BREAK_SEARCH) { return BREAK_SEARCH; }
+		if (currentScore == -BREAK_SEARCH) { return BREAK_SEARCH; }
 
 		/*if (currentScore >= beta)
 		{

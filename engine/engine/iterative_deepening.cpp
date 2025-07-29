@@ -7,17 +7,23 @@
 
 #pragma warning(push, 4)
 
-Move TimeSearch(Game& game, std::chrono::steady_clock::time_point deadline, int* reachedDepth)
+int TimeSearch(Game& game, std::chrono::steady_clock::time_point deadline, int* reachedDepth)
 {
-	Move result;
+	int result = 0;
+	Move bestMove;
+	int currentScore = 0;
 	int currentDepth = 1;
 	while (true)
 	{
-		if (Minimax(game, currentDepth, -0x10000, 0x10000, 0, false, deadline) == BREAK_SEARCH) { break; }
-		result = game.bestMove;
+		currentScore = Minimax(game, currentDepth, -0x10000, 0x10000, 0, false, deadline);
+		if (currentScore == BREAK_SEARCH) { break; }
+
+		result = currentScore;
+		bestMove = game.bestMove;
 		if (reachedDepth) { *reachedDepth = currentDepth; }
 		currentDepth++;
 	}
+	game.bestMove = bestMove;
 	return result;
 }
 

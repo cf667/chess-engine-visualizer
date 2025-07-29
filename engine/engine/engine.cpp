@@ -118,7 +118,39 @@ bool UCIMessageHandler(std::string message, Game& game)
 
     if ((temp = message.find("go")) != std::string::npos)
     {
-        std::cout << "info score cp " << Minimax(game, 1) * 100 << std::endl;
+        int endIndex;
+        int startIndex;
+
+        int msRemaining;
+        int msIncrement;
+        //std::cout << "info score cp " << Minimax(game, 3) * 100 << std::endl;
+        if (game.toMove)
+        {
+            temp = message.find("wtime");
+            startIndex = temp + 6;
+            for (endIndex = 0; message[startIndex + endIndex] != ' '; endIndex++) {}
+            msRemaining = std::stoi(message.substr(startIndex, endIndex));
+
+            temp = message.find("winc");
+            startIndex = temp + 5;
+            for (endIndex = 0; message[startIndex + endIndex] != ' '; endIndex++) {}
+            msIncrement = std::stoi(message.substr(startIndex, endIndex));
+        }
+        else
+        {
+            temp = message.find("btime");
+            startIndex = temp + 6;
+            for (endIndex = 0; message[startIndex + endIndex] != ' '; endIndex++) {}
+            msRemaining = std::stoi(message.substr(startIndex, endIndex));
+
+            temp = message.find("binc");
+            startIndex = temp + 5;
+            for (endIndex = 0; message[startIndex + endIndex] != ' '; endIndex++) {}
+            msIncrement = std::stoi(message.substr(startIndex, endIndex));
+        }
+
+        auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(msRemaining / 20 + msIncrement / 2);
+        std::cout << "info score cp " << TimeSearch(game, deadline) * 100 << std::endl;
         std::cout << "bestmove " << MoveToAlgebraic(game.bestMove) << std::endl;
     }
 

@@ -85,6 +85,11 @@ constexpr unsigned int PROMOTION_BISHOP_CAPTURE = 0xD;
 constexpr unsigned int PROMOTION_ROOK_CAPTURE = 0xE;
 constexpr unsigned int PROMOTION_QUEEN_CAPTURE = 0xF;
 
+constexpr bool IsCapture(unsigned char moveFlags)
+{
+	return moveFlags & 0b00000100;
+}
+
 constexpr bool IsPromotion(unsigned char moveFlags)
 {
 	return moveFlags & 0b00001000;

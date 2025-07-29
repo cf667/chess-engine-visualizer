@@ -289,6 +289,10 @@ bool Game::MakeMove(Move move)
 		break;
 	}
 
+	//50 move rule
+	if (GetPiece(Game::position[move.origin]) == PAWN || IsCapture(move.flags)) { Game::gameRules.halfMoveCounter = 0; }
+	else { Game::gameRules.halfMoveCounter++; }
+
 	moveHist.push_back(move);
 	Game::toMove = !Game::toMove;
 
