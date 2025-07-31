@@ -31,11 +31,11 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 		if (isRoot)
 		{
 			searchDepth = depth;
-			SendNewNode(nodeId, 0, 0, MoveToAlgebraic(game.moveHist.back()));
+			//SendNewNode(nodeId, 0, 0, MoveToAlgebraic(game.moveHist.back()));
 		}
 		else
 		{
-			SendNewNode(nodeId, searchDepth - depth, parentId, MoveToAlgebraic(game.moveHist.back()));
+			//SendNewNode(nodeId, searchDepth - depth, parentId, MoveToAlgebraic(game.moveHist.back()));
 		}
 	}
 	
@@ -64,9 +64,15 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 	for (int i = 0; i < moveList.count; i++)
 	{
 		move = moveList.list[i];
+
+		Game gameCopy = game;
 		game.MakeMove(move);
+
 		currentScore = -Minimax(game, depth - 1, -beta, -alpha, nodeId, visualize, deadline); //score of best enemy move
-		game.RevertMove();
+
+		transpositionTable[game.hashKey].repetition--;
+		game = gameCopy;
+
 		if (currentScore == -BREAK_SEARCH) { return BREAK_SEARCH; }
 
 		if (currentScore >= beta)

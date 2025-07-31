@@ -192,8 +192,6 @@ skipEnPassant:
 
 bool Game::MakeMove(Move move)
 {
-	ruleHist.push_back(Game::gameRules);
-
 	position[move.destination] = position[move.origin];
 	position[move.origin] = EMPTY;
 
@@ -299,65 +297,11 @@ bool Game::MakeMove(Move move)
 	if (GetPiece(Game::position[move.origin]) == PAWN || IsCapture(move.flags)) { Game::gameRules.halfMoveCounter = 0; }
 	else { Game::gameRules.halfMoveCounter++; }
 
-	Game::moveHist.push_back(move);
 	Game::toMove = !Game::toMove;
 
-	Game::hashKeyHist.push_back(hashKey);
 	Game::hashKey = GenerateKey(*this);
 
 	transpositionTable[Game::hashKey].repetition++;
-
-	return 1;
-}
-
-bool Game::RevertMove()
-{
-	position[moveHist.back().origin] = position[moveHist.back().destination];
-	position[moveHist.back().destination] = moveHist.back().capture;
-
-	if (moveHist.back().flags == ENPASSANT)
-	{
-		if (toMove)
-		{ 
-			position[moveHist.back().destination - 10] = moveHist.back().capture; 
-			position[moveHist.back().destination] = EMPTY;
-		}
-		else 
-		{ 
-			position[moveHist.back().destination + 10] = moveHist.back().capture; 
-			position[moveHist.back().destination] = EMPTY;
-		}
-	}
-
-	//promotion
-	if ((moveHist.back().flags >> 3) & 1)
-	{
-		Game::position[moveHist.back().origin] = (Game::position[moveHist.back().origin] & ~0b00000111) | (PAWN & 0b00000111);
-	}
-
-	//castle
-	if (moveHist.back().flags == CASTLE_KING)
-	{
-		position[moveHist.back().destination + 1] = position[moveHist.back().destination - 1];
-		position[moveHist.back().destination - 1] = EMPTY;
-	}
-	else if (moveHist.back().flags == CASTLE_QUEEN)
-	{
-		position[moveHist.back().destination - 2] = position[moveHist.back().destination + 1];
-		position[moveHist.back().destination + 1] = EMPTY;
-	}
-
-	moveHist.pop_back();
-
-	Game::gameRules = Game::ruleHist.back();
-	Game::ruleHist.pop_back();
-
-	transpositionTable[Game::hashKey].repetition--;
-
-	Game::hashKey = Game::hashKeyHist.back();
-	Game::hashKeyHist.pop_back();
-
-	Game::toMove = !Game::toMove;
 
 	return 1;
 }
@@ -470,40 +414,45 @@ MoveList Game::GetAllMoves()
 					{
 						curMove.Init(i, i + pawnDirection, promotion, EMPTY);
 
-						Game gameCopy;
+						Game gameCopy = *this;
 						Game::MakeMove(curMove);
 						if (!IsCheck(!Game::toMove))
 						{
 							result.list[result.count] = curMove;
 							result.count++;
 						}
-						Game::RevertMove();
+						transpositionTable[Game::hashKey].repetition--;
+						*this = gameCopy;
 					}
 				}
 				else  //normal move
 				{
 					curMove.Init(i, i + pawnDirection, QUIETMOVE, EMPTY);
 
+					Game gameCopy = *this;
 					Game::MakeMove(curMove);
 					if (!IsCheck(!Game::toMove))
 					{
 						result.list[result.count] = curMove;
 						result.count++;
 					}
-					Game::RevertMove();
+					transpositionTable[Game::hashKey].repetition--;
+					*this = gameCopy;
 				}
 
 				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnDirection * 2] >> 4) & 1) //double pawn push
 				{
 					curMove.Init(i, i + pawnDirection * 2, DOUBLEPAWNPUSH, EMPTY);
 
+					Game gameCopy = *this;
 					Game::MakeMove(curMove);
 					if (!IsCheck(!Game::toMove))
 					{
 						result.list[result.count] = curMove;
 						result.count++;
 					}
-					Game::RevertMove();
+					transpositionTable[Game::hashKey].repetition--;
+					*this = gameCopy;
 				}
 			}
 
@@ -515,26 +464,30 @@ MoveList Game::GetAllMoves()
 					{
 						curMove.Init(i, i + pawnDirection + 1, promotion + CAPTURE, Game::position[i + pawnDirection + 1]);
 
+						Game gameCopy = *this;
 						Game::MakeMove(curMove);
 						if (!IsCheck(!Game::toMove))
 						{
 							result.list[result.count] = curMove;
 							result.count++;
 						}
-						Game::RevertMove();
+						transpositionTable[Game::hashKey].repetition--;
+						*this = gameCopy;
 					}
 				}
 				else
 				{
 					curMove.Init(i, i + pawnDirection + 1, CAPTURE, Game::position[i + pawnDirection + 1]);
 
+					Game gameCopy = *this;
 					Game::MakeMove(curMove);
 					if (!IsCheck(!Game::toMove))
 					{
 						result.list[result.count] = curMove;
 						result.count++;
 					}
-					Game::RevertMove();
+					transpositionTable[Game::hashKey].repetition--;
+					*this = gameCopy;
 				}
 			}
 			if (!((Game::position[i + pawnDirection - 1] >> 5) & 1) && !((Game::position[i + pawnDirection - 1] >> 4) & 1) && ((Game::position[i + pawnDirection - 1] >> 3) & 1) != Game::toMove) //left side capture
@@ -545,26 +498,30 @@ MoveList Game::GetAllMoves()
 					{
 						curMove.Init(i, i + pawnDirection - (char)1, promotion + CAPTURE, Game::position[i + pawnDirection - 1]);
 
+						Game gameCopy = *this;
 						Game::MakeMove(curMove);
 						if (!IsCheck(!Game::toMove))
 						{
 							result.list[result.count] = curMove;
 							result.count++;
 						}
-						Game::RevertMove();
+						transpositionTable[Game::hashKey].repetition--;
+						*this = gameCopy;
 					}
 				}
 				else
 				{
 					curMove.Init(i, i + pawnDirection - (char)1, CAPTURE, Game::position[i + pawnDirection - 1]);
 
+					Game gameCopy = *this;
 					Game::MakeMove(curMove);
 					if (!IsCheck(!Game::toMove))
 					{
 						result.list[result.count] = curMove;
 						result.count++;
 					}
-					Game::RevertMove();
+					transpositionTable[Game::hashKey].repetition--;
+					*this = gameCopy;
 				}
 				
 			}
@@ -574,25 +531,29 @@ MoveList Game::GetAllMoves()
 			{
 				curMove.Init(i, i + pawnDirection + (char)1, ENPASSANT, Game::position[i + 1]);
 
+				Game gameCopy = *this;
 				Game::MakeMove(curMove);
 				if (!IsCheck(!Game::toMove))
 				{
 					result.list[result.count] = curMove;
 					result.count++;
 				}
-				Game::RevertMove();
+				transpositionTable[Game::hashKey].repetition--;
+				*this = gameCopy;
 			}
 			else if (i + pawnDirection - 1 == Game::gameRules.enPassantTarget) //left side en passant
 			{
 				curMove.Init(i, i + pawnDirection - (char)1, ENPASSANT, Game::position[i - 1]);
 
+				Game gameCopy = *this;
 				Game::MakeMove(curMove);
 				if (!IsCheck(!Game::toMove))
 				{
 					result.list[result.count] = curMove;
 					result.count++;
 				}
-				Game::RevertMove();
+				transpositionTable[Game::hashKey].repetition--;
+				*this = gameCopy;
 			}
 		}
 		else //every other piece
@@ -607,25 +568,29 @@ MoveList Game::GetAllMoves()
 						{
 							curMove.Init(i, i + offset * slide, QUIETMOVE, EMPTY);
 
+							Game gameCopy = *this;
 							Game::MakeMove(curMove);
 							if (!IsCheck(!Game::toMove))
 							{
 								result.list[result.count] = curMove;
 								result.count++;
 							}
-							Game::RevertMove();
+							transpositionTable[Game::hashKey].repetition--;
+							*this = gameCopy;
 						}
 						else if (((Game::position[i + offset * slide] >> 3) & 1) != Game::toMove) //enemy piece
 						{
 							curMove.Init(i, i + offset * slide, CAPTURE, Game::position[i + offset * slide]);
 
+							Game gameCopy = *this;
 							Game::MakeMove(curMove);
 							if (!IsCheck(!Game::toMove))
 							{
 								result.list[result.count] = curMove;
 								result.count++;
 							}
-							Game::RevertMove();
+							transpositionTable[Game::hashKey].repetition--;
+							*this = gameCopy;
 							break;
 						}
 						else //friendly piece
@@ -645,13 +610,15 @@ MoveList Game::GetAllMoves()
 					{
 						curMove.Init(i, i + offset, QUIETMOVE, EMPTY);
 
+						Game gameCopy = *this;
 						Game::MakeMove(curMove);
 						if (!IsCheck(!Game::toMove))
 						{
 							result.list[result.count] = curMove;
 							result.count++;
 						}
-						Game::RevertMove();
+						transpositionTable[Game::hashKey].repetition--;
+						*this = gameCopy;
 
 						//castling
 						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1)) //if king moves right/left, ...
@@ -661,9 +628,14 @@ MoveList Game::GetAllMoves()
 								goto skipCastle;
 							}
 
+							gameCopy = *this;
 							Game::MakeMove(curMove);
+
 							inCheck = Game::IsCheck(!Game::toMove);
-							Game::RevertMove();
+
+							transpositionTable[Game::hashKey].repetition--;
+							*this = gameCopy;
+
 							if (!inCheck && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
 							{
 								char flag = CASTLE_KING;
@@ -682,13 +654,15 @@ MoveList Game::GetAllMoves()
 								{
 									curMove.Init(i, i + offset * 2, flag, EMPTY);
 
+									gameCopy = *this;
 									Game::MakeMove(curMove);
 									if (!IsCheck(!Game::toMove))
 									{
 										result.list[result.count] = curMove;
 										result.count++;
 									}
-									Game::RevertMove();
+									transpositionTable[Game::hashKey].repetition--;
+									*this = gameCopy;
 								}
 							}
 						skipCastle:
@@ -699,13 +673,15 @@ MoveList Game::GetAllMoves()
 					{
 						curMove.Init(i, i + offset, CAPTURE, Game::position[i + offset]);
 
+						Game gameCopy = *this;
 						Game::MakeMove(curMove);
 						if (!IsCheck(!Game::toMove))
 						{
 							result.list[result.count] = curMove;
 							result.count++;
 						}
-						Game::RevertMove();
+						transpositionTable[Game::hashKey].repetition--;
+						*this = gameCopy;
 					}
 				}
 			}
@@ -760,6 +736,7 @@ size_t Perft(Game& game, int depth, bool first)
 	for (int i = 0; i < moveList.count; i++)
 	{
 		move = moveList.list[i];
+		Game gameCopy = game;
 		game.MakeMove(move);
 		currentResult = Perft(game, depth - 1, 0);
 		if (first)
@@ -767,7 +744,8 @@ size_t Perft(Game& game, int depth, bool first)
 			std::cout << IndexToCoord(move.origin) << IndexToCoord(move.destination) << ": " << currentResult << std::endl;
 		}
 		result += currentResult;
-		game.RevertMove();
+		transpositionTable[game.hashKey].repetition--;
+		game = gameCopy;
 	}
 
 	if (first)

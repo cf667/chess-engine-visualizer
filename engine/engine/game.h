@@ -45,14 +45,9 @@ public:
 	uint64_t hashKey;
 
 	bool MakeMove(Move move);
-	bool RevertMove();
 	bool IsCheck(bool white);
 	MoveList GetAllMoves();
 	MoveList GetLegalMoves();
-
-	std::vector<Move> moveHist;
-	std::vector<GameRules> ruleHist;
-	std::vector<uint64_t> hashKeyHist;
 
 	Move bestMove;
 };
