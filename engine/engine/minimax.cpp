@@ -65,7 +65,7 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 		game.RevertMove();
 		if (currentScore == -BREAK_SEARCH) { return BREAK_SEARCH; }
 
-		/*if (currentScore >= beta)
+		if (currentScore >= beta)
 		{
 			if (visualize) { SendNodeScore(nodeId, float(alpha) * colorMultiplier); }
 			return beta;
@@ -76,13 +76,13 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 			alpha = currentScore;
 			bestMove = move;
 		}
-		*/
+		
 		//this code is for normal minimax
-		if (currentScore > bestScore)
+		/*if (currentScore > bestScore)
 		{
 			bestScore = currentScore;
 			bestMove = move;
-		}
+		}*/
 	}
 	game.bestMove = bestMove;
 	if (visualize)
@@ -91,7 +91,7 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 		//SendNodeScore(nodeId, float(bestScore) * colorMultiplier);
 		if (isRoot) { searchDepth = -1; }
 	}
-	return bestScore;
+	return alpha;
 }
 
 #pragma warning(pop)

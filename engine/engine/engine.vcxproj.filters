@@ -42,6 +42,9 @@
     <ClCompile Include="iterative_deepening.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
+    <ClCompile Include="zobrist_hashing.cpp">
+      <Filter>Quelldateien</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h">
@@ -66,6 +69,9 @@
       <Filter>Headerdateien</Filter>
     </ClInclude>
     <ClInclude Include="iterative_deepening.h">
+      <Filter>Headerdateien</Filter>
+    </ClInclude>
+    <ClInclude Include="zobrist_hashing.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

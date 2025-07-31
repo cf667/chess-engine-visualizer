@@ -12,6 +12,7 @@ using json = nlohmann::json;
 #include "evaluation.h"
 #include "minimax.h"
 #include "socket.h"
+#include "zobrist_hashing.h"
 
 #pragma warning(push, 4)
 
@@ -84,7 +85,7 @@ bool UCIMessageHandler(std::string message, Game& game)
 
     if ((temp = message.find("ucinewgame")) != std::string::npos)
     {
-
+        hashMap.clear();
     }
 
     if ((temp = message.find("position")) != std::string::npos)

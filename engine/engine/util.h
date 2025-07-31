@@ -17,18 +17,18 @@ constexpr unsigned char EMPTY = 0x10; //5th bit
 constexpr unsigned char OUTOFBOUND = 0x20; //6th bit
 
 //first 4 bits
-constexpr unsigned char WQUEEN = 0x9;
-constexpr unsigned char WPAWN = 0xA;
-constexpr unsigned char WROOK = 0xB;
-constexpr unsigned char WKNIGHT = 0xC;
-constexpr unsigned char WBISHOP = 0xD;
-constexpr unsigned char WKING = 0xE;
 constexpr unsigned char BQUEEN = 0x1;
 constexpr unsigned char BPAWN = 0x2;
 constexpr unsigned char BROOK = 0x3;
 constexpr unsigned char BKNIGHT = 0x4;
 constexpr unsigned char BBISHOP = 0x5;
 constexpr unsigned char BKING = 0x6;
+constexpr unsigned char WQUEEN = 0x9;
+constexpr unsigned char WPAWN = 0xA;
+constexpr unsigned char WROOK = 0xB;
+constexpr unsigned char WKNIGHT = 0xC;
+constexpr unsigned char WBISHOP = 0xD;
+constexpr unsigned char WKING = 0xE;
 
 //helper functions
 constexpr unsigned char GetPiece(unsigned char square)
@@ -67,6 +67,26 @@ constexpr std::string IndexToCoord(char i)
 constexpr char CoordToIndex(const char* c)
 {
 	return (120 - ((c[1] - '0' + 2) * 10)) + (c[0] - 'a' + 1);
+}
+
+//hash indecies
+constexpr unsigned char I_BQUEEN = 0x0;
+constexpr unsigned char I_BPAWN = 0x1;
+constexpr unsigned char I_BROOK = 0x2;
+constexpr unsigned char I_BKNIGHT = 0x3;
+constexpr unsigned char I_BBISHOP = 0x4;
+constexpr unsigned char I_BKING = 0x5;
+constexpr unsigned char I_WQUEEN = 0x6;
+constexpr unsigned char I_WPAWN = 0x7;
+constexpr unsigned char I_WROOK = 0x8;
+constexpr unsigned char I_WKNIGHT = 0x9;
+constexpr unsigned char I_WBISHOP = 0xA;
+constexpr unsigned char I_WKING = 0xB;
+
+constexpr char PieceToHashIndex(char piece)
+{
+	if (IsWhite(piece)) { return piece - 3; }
+	else { return piece - 1; }
 }
 
 //moveTypes
@@ -166,6 +186,14 @@ constexpr unsigned int BKCASTLE = 0x1; //white king side - 1st bit
 constexpr unsigned int BQCASTLE = 0x2; //white queen side - 2nd bit
 constexpr unsigned int WKCASTLE = 0x4; //black king side - 3rd bit
 constexpr unsigned int WQCASTLE = 0x8; //black queen side - 4th bit
+
+constexpr void DisableCastlingWhite(char& castlingRights) { castlingRights &= 0b00000011; }
+constexpr void DisableCastlingBlack(char& castlingRights) { castlingRights &= 0b00001100; }
+
+constexpr void DisableCastlingBlackKing(char& castlingRights) { castlingRights &= 0b00001110; }
+constexpr void DisableCastlingBlackQueen(char& castlingRights) { castlingRights &= 0b00001101; }
+constexpr void DisableCastlingWhiteKing(char& castlingRights) { castlingRights &= 0b00001011; }
+constexpr void DisableCastlingWhiteQueen(char& castlingRights) { castlingRights &= 0b00000111; }
 
 //values
 constexpr unsigned char PIECE_VALUES[] = { 0, 9, 1, 5, 3, 3 };

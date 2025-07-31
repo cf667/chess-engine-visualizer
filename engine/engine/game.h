@@ -35,14 +35,18 @@ public:
 	bool toMove; // 1 for white / 0 for black
 	GameRules gameRules;
 
+	uint64_t hashKey;
+
 	bool MakeMove(Move move);
 	bool RevertMove();
 	bool IsCheck();
+	bool IsCheck(bool white);
 	std::vector<Move> GetAllMoves(bool includeCastling);
 	std::vector<Move> GetLegalMoves();
 
 	std::vector<Move> moveHist;
 	std::vector<GameRules> ruleHist;
+	std::vector<uint64_t> hashKeyHist;
 
 	Move bestMove;
 };

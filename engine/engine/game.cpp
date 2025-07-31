@@ -4,6 +4,8 @@
 
 #include "game.h"
 #include "util.h"
+#include "zobrist_hashing.h"
+#include "evaluation.h"
 
 #pragma warning(push, 4)
 
@@ -33,6 +35,8 @@ const std::vector<char> bishopOffset =	{ -11, -9, 9, 11 };
 
 const std::vector<std::vector<char>> offsets = { pawnOffset, queenOffset, pawnOffset, rookOffset, knightOffset, bishopOffset, kingOffset }; //pawnOffset -> NULL
 
+const std::vector<char> kingChecks =	{ -11, -10, -9, 1, 11, 10, 9, -1 };
+
 void Move::Init(char from, char to, char moveFlags, char capturedPiece)
 {
 	Move::origin = from;
@@ -52,6 +56,8 @@ Game::Game()
 {
 	std::copy(std::begin(startingPos), std::end(startingPos), std::begin(Game::position));
 	Game::toMove = 1;
+
+	hashKey = GenerateKey(*this);
 }
 
 Game::Game(const char* fen)
@@ -180,6 +186,8 @@ skipCastles:
 skipEnPassant:
 
 	Game::gameRules.halfMoveCounter = fen[curPos] - '0';
+
+	Game::hashKey = GenerateKey(*this);
 }
 
 bool Game::MakeMove(Move move)
@@ -228,11 +236,11 @@ bool Game::MakeMove(Move move)
 		position[move.destination + 1] = EMPTY;
 		if (Game::toMove) //remove castle ability
 		{
-			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0xC;
+			DisableCastlingWhite(Game::gameRules.castlingAbility);
 		}
 		else
 		{
-			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0x3;
+			DisableCastlingBlack(Game::gameRules.castlingAbility);
 		}
 	}
 	else if (move.flags == CASTLE_QUEEN)
@@ -241,51 +249,49 @@ bool Game::MakeMove(Move move)
 		position[move.destination - 2] = EMPTY;
 		if (Game::toMove) //remove castle ability
 		{
-			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0xC;
+			DisableCastlingWhite(Game::gameRules.castlingAbility);
 		}
 		else
 		{
-			Game::gameRules.castlingAbility = Game::gameRules.castlingAbility - 0x3;
+			DisableCastlingBlack(Game::gameRules.castlingAbility);
 		}
 	}
 
 	switch (move.origin) //rook or king moves
 	{
 	case 28:
-		Game::gameRules.castlingAbility &= ~(1 << 0); //BK
+		DisableCastlingBlackKing(Game::gameRules.castlingAbility); //BK
 		break;
 	case 21:
-		Game::gameRules.castlingAbility &= ~(1 << 1); //BQ
+		DisableCastlingBlackQueen(Game::gameRules.castlingAbility); //BQ
 		break;
 	case 98:
-		Game::gameRules.castlingAbility &= ~(1 << 2); //WK
+		DisableCastlingWhiteKing(Game::gameRules.castlingAbility); //WK
 		break;
 	case 91:
-		Game::gameRules.castlingAbility &= ~(1 << 3); //WQ
+		DisableCastlingWhiteQueen(Game::gameRules.castlingAbility); //WQ
 		break;
 	case 25:
-		Game::gameRules.castlingAbility &= ~(1 << 0); //B
-		Game::gameRules.castlingAbility &= ~(1 << 1);
+		DisableCastlingBlack(Game::gameRules.castlingAbility);
 		break;
 	case 95:
-		Game::gameRules.castlingAbility &= ~(1 << 2); //W
-		Game::gameRules.castlingAbility &= ~(1 << 3);
+		DisableCastlingWhite(Game::gameRules.castlingAbility);
 		break;
 	}
 
 	switch (move.destination) //rook is captured
 	{
 	case 28:
-		Game::gameRules.castlingAbility &= ~(1 << 0); //BK
+		DisableCastlingBlackKing(Game::gameRules.castlingAbility); //BK
 		break;
 	case 21:
-		Game::gameRules.castlingAbility &= ~(1 << 1); //BQ
+		DisableCastlingBlackQueen(Game::gameRules.castlingAbility); //BQ
 		break;
 	case 98:
-		Game::gameRules.castlingAbility &= ~(1 << 2); //WK
+		DisableCastlingWhiteKing(Game::gameRules.castlingAbility); //WK
 		break;
 	case 91:
-		Game::gameRules.castlingAbility &= ~(1 << 3); //WQ
+		DisableCastlingWhiteQueen(Game::gameRules.castlingAbility); //WQ
 		break;
 	}
 
@@ -293,8 +299,13 @@ bool Game::MakeMove(Move move)
 	if (GetPiece(Game::position[move.origin]) == PAWN || IsCapture(move.flags)) { Game::gameRules.halfMoveCounter = 0; }
 	else { Game::gameRules.halfMoveCounter++; }
 
-	moveHist.push_back(move);
+	Game::moveHist.push_back(move);
 	Game::toMove = !Game::toMove;
+
+	Game::hashKeyHist.push_back(hashKey);
+	Game::hashKey = GenerateKey(*this);
+
+	hashMap[Game::hashKey]++;
 
 	return 1;
 }
@@ -341,6 +352,11 @@ bool Game::RevertMove()
 	Game::gameRules = Game::ruleHist.back();
 	Game::ruleHist.pop_back();
 
+	hashMap[Game::hashKey]--;
+
+	Game::hashKey = Game::hashKeyHist.back();
+	Game::hashKeyHist.pop_back();
+
 	Game::toMove = !Game::toMove;
 
 	return 1;
@@ -359,13 +375,69 @@ bool Game::IsCheck()
 	return 0;
 }
 
+bool Game::IsCheck(bool white)
+{
+	char kingIndex = 0;
+	for (int i = 0; i < 120; i++)
+	{
+		if (GetPiece(Game::position[i]) == KING && IsWhite(Game::position[i]) == white)
+		{
+			kingIndex = i;
+		}
+	}
+
+	char targetSquare;
+	char targetPiece;
+	for (int i = 0; i < 8; i++)
+	{
+		for (int j = 1; j < 8; j++)
+		{
+			targetSquare = Game::position[kingIndex + kingChecks[i] * j];
+
+			if (IsOutOfBound(targetSquare)) { break; }
+			if (IsEmpty(targetSquare)) { continue; }
+			if (IsWhite(targetSquare) == white) { break; }
+			
+			targetPiece = GetPiece(targetSquare);
+			if (targetPiece == QUEEN) { return true; }
+
+			if (i % 2) //if straight
+			{
+				if (targetPiece == ROOK) { return true; }
+			}
+			else
+			{
+				if (targetPiece == BISHOP) { return true; }
+				if (targetPiece == PAWN && j == 1) { return true; }
+			}
+
+			if (targetPiece == PAWN && j == 1 && (i == 0 || i == 2) && white) { return true; }
+
+			if (targetPiece == PAWN && j == 1 && (i == 4 || i == 6) && !white) { return true; }
+
+			if (targetPiece == KING && j == 1) { return true; }
+
+			break;
+		}
+	}
+
+	for (int i = 0; i < 8; i++)
+	{
+		targetSquare = Game::position[kingIndex + knightOffset[i]];
+		if (IsWhite(targetSquare) == white) { continue; }
+		if (GetPiece(targetSquare) == KNIGHT) { return true; }
+	}
+
+	return false;
+}
+
 std::chrono::duration<float> totalDuration = std::chrono::duration<float>(0.f);
 
 std::vector<Move> Game::GetAllMoves(bool includeCastling)
 {
 	auto timeStart = std::chrono::high_resolution_clock::now();
 
-	std::vector<Move> moveList;
+	std::vector<Move> moveList = {};
 
 	int curMoveIndex = 0;
 	Move curMove;
@@ -525,16 +597,13 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 						//castling
 						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1) && includeCastling) //if king moves right/left, ...
 						{
-							Game::toMove = !Game::toMove;
-							if (Game::IsCheck()) //... isnt in check right now ...
+							if (Game::IsCheck(Game::toMove)) //... isnt in check right now ...
 							{
-								Game::toMove = !Game::toMove;
 								goto skipCastle;
 							}
-							Game::toMove = !Game::toMove;
 
 							Game::MakeMove(curMove);
-							inCheck = Game::IsCheck();
+							inCheck = Game::IsCheck(!Game::toMove);
 							Game::RevertMove();
 							if (!inCheck && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
 							{
@@ -584,7 +653,7 @@ std::vector<Move> Game::GetLegalMoves()
 	for (int i = 0; i < legalMoves.size(); i++)
 	{
 		Game::MakeMove(legalMoves[i]);
-		if (IsCheck())
+		if (IsCheck(!Game::toMove))
 		{
 			legalMoves.erase(legalMoves.begin() + i);
 			i--;

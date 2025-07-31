@@ -20,7 +20,22 @@ int main()
     else if (startupMode == "test")
     {
         // testing speed
-        Game game = Game("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - ");
+        Game game = Game("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+
+        /*Move move;
+        move.Init(CoordToIndex("e1"), CoordToIndex("f1"), QUIETMOVE, EMPTY);
+        game.MakeMove(move);
+
+        move.Init(CoordToIndex("a8"), CoordToIndex("b8"), QUIETMOVE, EMPTY);
+        game.MakeMove(move);
+
+        move.Init(CoordToIndex("a1"), CoordToIndex("b1"), QUIETMOVE, EMPTY);
+        game.MakeMove(move);
+
+        move.Init(CoordToIndex("e8"), CoordToIndex("g8"), CASTLE_KING, EMPTY);
+        game.MakeMove(move);
+
+        PrintPosition(game.position);*/
 
         std::cin >> startupMode;
         if (startupMode == "depth")
@@ -51,6 +66,13 @@ int main()
             auto deadline = std::chrono::high_resolution_clock::now() + std::chrono::seconds(time);
             TimeSearch(game, deadline, &reachedDepth);
             std::cout << "Reached depth " << reachedDepth << " - best move: " << MoveToAlgebraic(game.bestMove) << "\n";
+        }
+        else if (startupMode == "perft")
+        {
+            int depth;
+            std::cin >> depth;
+
+            Perft(game, depth);
         }
     }
 
