@@ -4,6 +4,7 @@
 #include "evaluation.h"
 #include "util.h"
 #include "socket.h"
+#include "transposition_table.h"
 
 #pragma warning(push, 4)
 
@@ -11,7 +12,7 @@ int currentId = 1;
 int searchDepth = -1;
 int totalNodesSearched;
 
-int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int parentId, bool visualize, std::optional<std::chrono::steady_clock::time_point> deadline)
+float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int parentId, bool visualize, std::optional<std::chrono::steady_clock::time_point> deadline)
 {
 	if (deadline.has_value() && std::chrono::steady_clock::now() >= deadline.value()) 
 	{ 
@@ -41,7 +42,7 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 	int colorMultiplier = GetColorMultiplier(game.toMove);
 	if (!depth) 
 	{ 
-		int score = EvaluatePosition(game);
+		float score = EvaluatePosition(game);
 		if (visualize) { SendNodeScore(nodeId, float(score)); }
 		return score * colorMultiplier; //return evaluation relative to the side to move -> negative always bad / positive always good
 	} 
@@ -49,7 +50,7 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 	unsigned char gameState = GetGameState(game);
 	if (!IsRunning(gameState)) 
 	{ 
-		int score = GetGameStateValue(gameState);
+		float score = GetGameStateValue(gameState);
 		if (visualize) { SendNodeScore(nodeId, float(score)); }
 		return score * colorMultiplier; 
 	}
@@ -57,9 +58,12 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 	//because the evaluation is always relative, each side always wants to maximize their score (black would typically want to minimize)
 	int bestScore = INT32_MIN;
 	Move bestMove;
-	int currentScore;
-	for (Move move : game.GetLegalMoves())
+	float currentScore;
+	MoveList moveList = game.GetLegalMoves();
+	Move move;
+	for (int i = 0; i < moveList.count; i++)
 	{
+		move = moveList.list[i];
 		game.MakeMove(move);
 		currentScore = -Minimax(game, depth - 1, -beta, -alpha, nodeId, visualize, deadline); //score of best enemy move
 		game.RevertMove();
@@ -67,7 +71,8 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 
 		if (currentScore >= beta)
 		{
-			if (visualize) { SendNodeScore(nodeId, float(alpha) * colorMultiplier); }
+			if (visualize) { SendNodeScore(nodeId, alpha * colorMultiplier); }
+			transpositionTable[game.hashKey].score = beta;
 			return beta;
 		}
 
@@ -91,6 +96,8 @@ int Minimax(Game& game, const unsigned int depth, int alpha, int beta, int paren
 		//SendNodeScore(nodeId, float(bestScore) * colorMultiplier);
 		if (isRoot) { searchDepth = -1; }
 	}
+
+	transpositionTable[game.hashKey].score = alpha;
 	return alpha;
 }
 

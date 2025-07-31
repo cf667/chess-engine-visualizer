@@ -12,7 +12,7 @@ using json = nlohmann::json;
 #include "evaluation.h"
 #include "minimax.h"
 #include "socket.h"
-#include "zobrist_hashing.h"
+#include "transposition_table.h"
 
 #pragma warning(push, 4)
 
@@ -43,12 +43,15 @@ void SocketMessageHandler(std::string msg, Game& game)
 
         json message;
         message["id"] = 1;
-        for (Move currentMove : game.GetLegalMoves())
+
+        MoveList moveList = game.GetLegalMoves();
+        for (int i = 0; i < moveList.count; i++)
         {
-            if (currentMove.origin != msgOrigin || currentMove.destination != msgDestination) { continue; }
-            game.MakeMove(currentMove);
+            if (moveList.list[i].origin != msgOrigin || moveList.list[i].destination != msgDestination) { continue; }
+            game.MakeMove(moveList.list[i]);
             break;
         }
+
         message["position"] = game.position;
         socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
         break;
@@ -85,7 +88,7 @@ bool UCIMessageHandler(std::string message, Game& game)
 
     if ((temp = message.find("ucinewgame")) != std::string::npos)
     {
-        hashMap.clear();
+        transpositionTable.clear();
     }
 
     if ((temp = message.find("position")) != std::string::npos)
@@ -100,12 +103,14 @@ bool UCIMessageHandler(std::string message, Game& game)
         {
             while ((temp = message.find(' ', temp + 1)) != std::string::npos)
             {
-                std::vector<Move> possibleMoves = game.GetLegalMoves();
+                MoveList possibleMoves = game.GetLegalMoves();
                 char currentMoveOrigin = CoordToIndex(message.substr(temp + 1, temp + 3).c_str());
                 char currentMoveDestination = CoordToIndex(message.substr(temp + 3, temp + 5).c_str());
                 char currentMovePromotion = CharToPromotionType(message[temp + 5]);
-                for (Move move : possibleMoves)
+                Move move;
+                for (int i = 0; i < possibleMoves.count; i++)
                 {
+                    move = possibleMoves.list[i];
                     if (currentMoveOrigin != move.origin) { continue; }
                     if (currentMoveDestination != move.destination) { continue; }
                     if (currentMovePromotion != QUIETMOVE && currentMovePromotion != GetPromotionType(move.flags)) { continue; }
@@ -119,8 +124,8 @@ bool UCIMessageHandler(std::string message, Game& game)
 
     if ((temp = message.find("go")) != std::string::npos)
     {
-        int endIndex;
-        int startIndex;
+        size_t endIndex;
+        size_t startIndex;
 
         int msRemaining;
         int msIncrement;

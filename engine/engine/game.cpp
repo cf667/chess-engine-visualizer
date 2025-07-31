@@ -4,7 +4,7 @@
 
 #include "game.h"
 #include "util.h"
-#include "zobrist_hashing.h"
+#include "transposition_table.h"
 #include "evaluation.h"
 
 #pragma warning(push, 4)
@@ -305,7 +305,7 @@ bool Game::MakeMove(Move move)
 	Game::hashKeyHist.push_back(hashKey);
 	Game::hashKey = GenerateKey(*this);
 
-	hashMap[Game::hashKey]++;
+	transpositionTable[Game::hashKey].repetition++;
 
 	return 1;
 }
@@ -352,7 +352,7 @@ bool Game::RevertMove()
 	Game::gameRules = Game::ruleHist.back();
 	Game::ruleHist.pop_back();
 
-	hashMap[Game::hashKey]--;
+	transpositionTable[Game::hashKey].repetition--;
 
 	Game::hashKey = Game::hashKeyHist.back();
 	Game::hashKeyHist.pop_back();
@@ -362,23 +362,10 @@ bool Game::RevertMove()
 	return 1;
 }
 
-bool Game::IsCheck()
-{
-	std::vector moves = Game::GetAllMoves(0);
-	for (int i = 0; i < moves.size(); i++)
-	{
-		if ((moves[i].capture & 0b111) == KING)
-		{
-			return 1;
-		}
-	}
-	return 0;
-}
-
 bool Game::IsCheck(bool white)
 {
 	char kingIndex = 0;
-	for (int i = 0; i < 120; i++)
+	for (char i = 0; i < 120; i++)
 	{
 		if (GetPiece(Game::position[i]) == KING && IsWhite(Game::position[i]) == white)
 		{
@@ -433,13 +420,12 @@ bool Game::IsCheck(bool white)
 
 std::chrono::duration<float> totalDuration = std::chrono::duration<float>(0.f);
 
-std::vector<Move> Game::GetAllMoves(bool includeCastling)
+MoveList Game::GetAllMoves()
 {
+	MoveList result;
+
 	auto timeStart = std::chrono::high_resolution_clock::now();
 
-	std::vector<Move> moveList = {};
-
-	int curMoveIndex = 0;
 	Move curMove;
 
 	char pawnDirection;
@@ -483,22 +469,41 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
 						curMove.Init(i, i + pawnDirection, promotion, EMPTY);
-						moveList.push_back(curMove);
-						curMoveIndex++;
+
+						Game gameCopy;
+						Game::MakeMove(curMove);
+						if (!IsCheck(!Game::toMove))
+						{
+							result.list[result.count] = curMove;
+							result.count++;
+						}
+						Game::RevertMove();
 					}
 				}
 				else  //normal move
 				{
 					curMove.Init(i, i + pawnDirection, QUIETMOVE, EMPTY);
-					moveList.push_back(curMove);
-					curMoveIndex++;
+
+					Game::MakeMove(curMove);
+					if (!IsCheck(!Game::toMove))
+					{
+						result.list[result.count] = curMove;
+						result.count++;
+					}
+					Game::RevertMove();
 				}
 
 				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnDirection * 2] >> 4) & 1) //double pawn push
 				{
 					curMove.Init(i, i + pawnDirection * 2, DOUBLEPAWNPUSH, EMPTY);
-					moveList.push_back(curMove);
-					curMoveIndex++;
+
+					Game::MakeMove(curMove);
+					if (!IsCheck(!Game::toMove))
+					{
+						result.list[result.count] = curMove;
+						result.count++;
+					}
+					Game::RevertMove();
 				}
 			}
 
@@ -509,15 +514,27 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
 						curMove.Init(i, i + pawnDirection + 1, promotion + CAPTURE, Game::position[i + pawnDirection + 1]);
-						moveList.push_back(curMove);
-						curMoveIndex++;
+
+						Game::MakeMove(curMove);
+						if (!IsCheck(!Game::toMove))
+						{
+							result.list[result.count] = curMove;
+							result.count++;
+						}
+						Game::RevertMove();
 					}
 				}
 				else
 				{
 					curMove.Init(i, i + pawnDirection + 1, CAPTURE, Game::position[i + pawnDirection + 1]);
-					moveList.push_back(curMove);
-					curMoveIndex++;
+
+					Game::MakeMove(curMove);
+					if (!IsCheck(!Game::toMove))
+					{
+						result.list[result.count] = curMove;
+						result.count++;
+					}
+					Game::RevertMove();
 				}
 			}
 			if (!((Game::position[i + pawnDirection - 1] >> 5) & 1) && !((Game::position[i + pawnDirection - 1] >> 4) & 1) && ((Game::position[i + pawnDirection - 1] >> 3) & 1) != Game::toMove) //left side capture
@@ -527,15 +544,27 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
 						curMove.Init(i, i + pawnDirection - (char)1, promotion + CAPTURE, Game::position[i + pawnDirection - 1]);
-						moveList.push_back(curMove);
-						curMoveIndex++;
+
+						Game::MakeMove(curMove);
+						if (!IsCheck(!Game::toMove))
+						{
+							result.list[result.count] = curMove;
+							result.count++;
+						}
+						Game::RevertMove();
 					}
 				}
 				else
 				{
 					curMove.Init(i, i + pawnDirection - (char)1, CAPTURE, Game::position[i + pawnDirection - 1]);
-					moveList.push_back(curMove);
-					curMoveIndex++;
+
+					Game::MakeMove(curMove);
+					if (!IsCheck(!Game::toMove))
+					{
+						result.list[result.count] = curMove;
+						result.count++;
+					}
+					Game::RevertMove();
 				}
 				
 			}
@@ -544,14 +573,26 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 			if (i + pawnDirection + 1 == Game::gameRules.enPassantTarget) //right side en passant
 			{
 				curMove.Init(i, i + pawnDirection + (char)1, ENPASSANT, Game::position[i + 1]);
-				moveList.push_back(curMove);
-				curMoveIndex++;
+
+				Game::MakeMove(curMove);
+				if (!IsCheck(!Game::toMove))
+				{
+					result.list[result.count] = curMove;
+					result.count++;
+				}
+				Game::RevertMove();
 			}
 			else if (i + pawnDirection - 1 == Game::gameRules.enPassantTarget) //left side en passant
 			{
 				curMove.Init(i, i + pawnDirection - (char)1, ENPASSANT, Game::position[i - 1]);
-				moveList.push_back(curMove);
-				curMoveIndex++;
+
+				Game::MakeMove(curMove);
+				if (!IsCheck(!Game::toMove))
+				{
+					result.list[result.count] = curMove;
+					result.count++;
+				}
+				Game::RevertMove();
 			}
 		}
 		else //every other piece
@@ -565,14 +606,26 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 						if ((Game::position[i + offset * slide] >> 4) & 1) //empty square
 						{
 							curMove.Init(i, i + offset * slide, QUIETMOVE, EMPTY);
-							moveList.push_back(curMove);
-							curMoveIndex++;
+
+							Game::MakeMove(curMove);
+							if (!IsCheck(!Game::toMove))
+							{
+								result.list[result.count] = curMove;
+								result.count++;
+							}
+							Game::RevertMove();
 						}
 						else if (((Game::position[i + offset * slide] >> 3) & 1) != Game::toMove) //enemy piece
 						{
 							curMove.Init(i, i + offset * slide, CAPTURE, Game::position[i + offset * slide]);
-							moveList.push_back(curMove);
-							curMoveIndex++;
+
+							Game::MakeMove(curMove);
+							if (!IsCheck(!Game::toMove))
+							{
+								result.list[result.count] = curMove;
+								result.count++;
+							}
+							Game::RevertMove();
 							break;
 						}
 						else //friendly piece
@@ -591,11 +644,17 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 					if ((Game::position[i + offset] >> 4) & 1) //empty square
 					{
 						curMove.Init(i, i + offset, QUIETMOVE, EMPTY);
-						moveList.push_back(curMove);
-						curMoveIndex++;
+
+						Game::MakeMove(curMove);
+						if (!IsCheck(!Game::toMove))
+						{
+							result.list[result.count] = curMove;
+							result.count++;
+						}
+						Game::RevertMove();
 
 						//castling
-						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1) && includeCastling) //if king moves right/left, ...
+						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1)) //if king moves right/left, ...
 						{
 							if (Game::IsCheck(Game::toMove)) //... isnt in check right now ...
 							{
@@ -622,8 +681,14 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 									((Game::position[i + offset * 2 - temp] >> 4) & 1))							//check if squares are empty
 								{
 									curMove.Init(i, i + offset * 2, flag, EMPTY);
-									moveList.push_back(curMove);
-									curMoveIndex++;
+
+									Game::MakeMove(curMove);
+									if (!IsCheck(!Game::toMove))
+									{
+										result.list[result.count] = curMove;
+										result.count++;
+									}
+									Game::RevertMove();
 								}
 							}
 						skipCastle:
@@ -633,8 +698,14 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 					else if (((Game::position[i + offset] >> 3) & 1) != Game::toMove) //enemy piece
 					{
 						curMove.Init(i, i + offset, CAPTURE, Game::position[i + offset]);
-						moveList.push_back(curMove);
-						curMoveIndex++;
+
+						Game::MakeMove(curMove);
+						if (!IsCheck(!Game::toMove))
+						{
+							result.list[result.count] = curMove;
+							result.count++;
+						}
+						Game::RevertMove();
 					}
 				}
 			}
@@ -644,12 +715,14 @@ std::vector<Move> Game::GetAllMoves(bool includeCastling)
 	auto timeEnd = std::chrono::high_resolution_clock::now();
 	std::chrono::duration<float> duration = timeEnd - timeStart;
 	totalDuration += duration;
-	return moveList;
+	return result;
 }
 
-std::vector<Move> Game::GetLegalMoves()
+MoveList Game::GetLegalMoves()
 {
-	std::vector<Move> legalMoves = Game::GetAllMoves(1);
+	return GetAllMoves();
+
+	/*std::vector<Move> legalMoves = Game::GetAllMoves(1);
 	for (int i = 0; i < legalMoves.size(); i++)
 	{
 		Game::MakeMove(legalMoves[i]);
@@ -660,7 +733,7 @@ std::vector<Move> Game::GetLegalMoves()
 		}
 		Game::RevertMove();
 	}
-	return legalMoves;
+	return legalMoves;*/
 }
 
 size_t Perft(Game& game, int depth, bool first)
@@ -668,21 +741,25 @@ size_t Perft(Game& game, int depth, bool first)
 	size_t result = 0;
 	size_t currentResult = 0;
 
-	std::vector<Move> moveList = game.GetLegalMoves();
+	MoveList moveList = game.GetLegalMoves();
 	if (depth == 1) 
 	{ 
 		if (first)
 		{
-			for (Move move : moveList)
+			Move move;
+			for (int i = 0; i < moveList.count; i++)
 			{
+				move = moveList.list[i];
 				std::cout << IndexToCoord(move.origin) << IndexToCoord(move.destination) << std::endl;
 			}
 		}
-		return moveList.size(); 
+		return moveList.count; 
 	}
 
-	for (Move move : moveList)
+	Move move;
+	for (int i = 0; i < moveList.count; i++)
 	{
+		move = moveList.list[i];
 		game.MakeMove(move);
 		currentResult = Perft(game, depth - 1, 0);
 		if (first)

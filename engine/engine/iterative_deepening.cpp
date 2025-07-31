@@ -7,11 +7,11 @@
 
 #pragma warning(push, 4)
 
-int TimeSearch(Game& game, std::chrono::steady_clock::time_point deadline, int* reachedDepth)
+float TimeSearch(Game& game, std::chrono::steady_clock::time_point deadline, int* reachedDepth)
 {
-	int result = 0;
+	float result = 0;
 	Move bestMove;
-	int currentScore = 0;
+	float currentScore = 0;
 	int currentDepth = 1;
 	while (true)
 	{

@@ -42,7 +42,7 @@
     <ClCompile Include="iterative_deepening.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
-    <ClCompile Include="zobrist_hashing.cpp">
+    <ClCompile Include="transposition_table.cpp">
       <Filter>Quelldateien</Filter>
     </ClCompile>
   </ItemGroup>
@@ -71,7 +71,7 @@
     <ClInclude Include="iterative_deepening.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
-    <ClInclude Include="zobrist_hashing.h">
+    <ClInclude Include="transposition_table.h">
       <Filter>Headerdateien</Filter>
     </ClInclude>
   </ItemGroup>

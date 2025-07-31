@@ -214,7 +214,7 @@ constexpr bool IsRunning(unsigned char gameState)
 	return gameState & 0b00000001;
 }
 
-constexpr int GetGameStateValue(unsigned char gameState)
+constexpr float GetGameStateValue(unsigned char gameState)
 {
 	if (gameState & 0b00000010) { return -0x1000; }
 	if (gameState & 0b00000100) { return 0x1000; }

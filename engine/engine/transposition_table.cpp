@@ -1,8 +1,8 @@
-#include "zobrist_hashing.h"
+#include "transposition_table.h"
 
 #include "util.h"
 
-std::unordered_map<uint64_t, int> hashMap;
+std::unordered_map<uint64_t, SearchInfo> transpositionTable;
 
 uint64_t GenerateKey(Game& game)
 {

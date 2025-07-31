@@ -43,8 +43,6 @@ int main()
             int depth;
             std::cin >> depth;
 
-            auto startTime = std::chrono::high_resolution_clock::now();
-
             std::cout << std::endl;
 
             for (int i = 1; i <= depth; i++)
@@ -71,8 +69,10 @@ int main()
         {
             int depth;
             std::cin >> depth;
-
+            auto startTime = std::chrono::high_resolution_clock::now();
             Perft(game, depth);
+            std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
+            std::cout << "duration: " << duration;
         }
     }
 

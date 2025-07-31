@@ -128,6 +128,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <Profile>true</Profile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -140,7 +141,7 @@
     <ClCompile Include="socket.cpp" />
     <ClCompile Include="uci.cpp" />
     <ClCompile Include="util.cpp" />
-    <ClCompile Include="zobrist_hashing.cpp" />
+    <ClCompile Include="transposition_table.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="engine.h" />
@@ -151,7 +152,7 @@
     <ClInclude Include="socket.h" />
     <ClInclude Include="uci.h" />
     <ClInclude Include="util.h" />
-    <ClInclude Include="zobrist_hashing.h" />
+    <ClInclude Include="transposition_table.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

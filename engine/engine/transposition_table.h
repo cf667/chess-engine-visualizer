@@ -4,7 +4,14 @@
 
 #include "game.h"
 
-extern std::unordered_map<uint64_t, int> hashMap;
+class SearchInfo
+{
+public:
+	float score = 0;
+	int repetition = 0;
+};
+
+extern std::unordered_map<uint64_t, SearchInfo> transpositionTable;
 
 namespace zobrist
 {

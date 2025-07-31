@@ -24,6 +24,13 @@ public:
 	char halfMoveCounter; //for 50 move rule
 };
 
+class MoveList
+{
+public:
+	int count = 0;
+	Move list[256];
+};
+
 class Game
 {
 public:
@@ -39,10 +46,9 @@ public:
 
 	bool MakeMove(Move move);
 	bool RevertMove();
-	bool IsCheck();
 	bool IsCheck(bool white);
-	std::vector<Move> GetAllMoves(bool includeCastling);
-	std::vector<Move> GetLegalMoves();
+	MoveList GetAllMoves();
+	MoveList GetLegalMoves();
 
 	std::vector<Move> moveHist;
 	std::vector<GameRules> ruleHist;
