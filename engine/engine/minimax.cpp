@@ -12,8 +12,19 @@ int currentId = 1;
 int searchDepth = -1;
 int totalNodesSearched;
 
+Move bestMove;
+
+bool MoveComparator(Move a, Move b)
+{
+	if (IsCapture(b.flags)) { return false; } //always prefer captures
+	if (b.origin == bestMove.origin && b.destination == bestMove.destination && b.flags == bestMove.flags) { return false; }
+	return true;
+}
+
 float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int parentId, bool visualize, std::optional<std::chrono::steady_clock::time_point> deadline)
 {
+	float originalAlpha = alpha;
+
 	if (deadline.has_value() && std::chrono::steady_clock::now() >= deadline.value()) 
 	{ 
 		return BREAK_SEARCH; 
@@ -38,6 +49,34 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 			//SendNewNode(nodeId, searchDepth - depth, parentId, MoveToAlgebraic(game.moveHist.back()));
 		}
 	}
+
+	SearchInfo* searchInfo = &transpositionTable[game.hashKey];
+	if (searchInfo->depth >= depth)
+	{
+		switch (searchInfo->flag)
+		{
+		case EXACT:
+			game.bestMove = searchInfo->bestMove;
+			return searchInfo->score;
+			break;
+
+		case LOWERBOUND:
+			if (searchInfo->score >= alpha) 
+			{ 
+				game.bestMove = searchInfo->bestMove;
+				return searchInfo->score; 
+			}
+			break;
+
+		case UPPERBOUND:
+			if (searchInfo->score <= beta) 
+			{ 
+				game.bestMove = searchInfo->bestMove;
+				return searchInfo->score; 
+			}
+			break;
+		}
+	}
 	
 	int colorMultiplier = GetColorMultiplier(game.toMove);
 	if (!depth) 
@@ -60,7 +99,10 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 	Move bestMove;
 	float currentScore;
 	MoveList moveList = game.GetLegalMoves();
+	bestMove = transpositionTable[game.hashKey].bestMove;
+	std::sort(moveList.list, moveList.list + moveList.count, MoveComparator); //sort moves so that captures are always first
 	Move move;
+
 	for (int i = 0; i < moveList.count; i++)
 	{
 		move = moveList.list[i];
@@ -78,7 +120,17 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 		if (currentScore >= beta)
 		{
 			if (visualize) { SendNodeScore(nodeId, alpha * colorMultiplier); }
-			transpositionTable[game.hashKey].score = beta;
+
+			if (searchInfo->depth < depth) 
+			{
+				searchInfo->score = beta;
+				searchInfo->flag = LOWERBOUND;
+				searchInfo->bestMove = move;
+				searchInfo->depth = depth; 
+			}
+
+			game.bestMove = move;
+
 			return beta;
 		}
 
@@ -95,7 +147,7 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 			bestMove = move;
 		}*/
 	}
-	game.bestMove = bestMove;
+
 	if (visualize)
 	{
 		SendNodeScore(nodeId, float(alpha) * colorMultiplier);
@@ -103,7 +155,18 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 		if (isRoot) { searchDepth = -1; }
 	}
 
-	transpositionTable[game.hashKey].score = alpha;
+	game.bestMove = bestMove;
+
+	if (searchInfo->depth < depth)
+	{
+		searchInfo->score = alpha;
+		searchInfo->bestMove = bestMove;
+		searchInfo->depth = depth;
+	}
+
+	if (alpha <= originalAlpha) { searchInfo->flag = UPPERBOUND; }
+	else { searchInfo->flag = EXACT; }
+
 	return alpha;
 }
 

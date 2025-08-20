@@ -93,6 +93,8 @@ bool UCIMessageHandler(std::string message, Game& game)
 
     if ((temp = message.find("position")) != std::string::npos)
     {
+        transpositionTable.clear();
+
         if (message.find("fen", temp + 8) != std::string::npos)
         {
             game = Game(message.substr(temp + 13, std::string::npos).c_str());

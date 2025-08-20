@@ -7,16 +7,17 @@ std::unordered_map<uint64_t, SearchInfo> transpositionTable;
 uint64_t GenerateKey(Game& game)
 {
 	uint64_t result = 0;
-	for (int i = 0; i < 120; i++)
+	for (int i = 0; i < 64; i++)
 	{
-		if (GetPiece(game.position[i]))
+		const char square = game.position[translateToBigBoard[i]];
+		if (GetPiece(square))
 		{
-			result ^= zobrist::position[PieceToHashIndex(game.position[i])][i];
+			result ^= zobrist::position[PieceToHashIndex(square)][i];
 		}
 	}
 	if (!game.toMove) { result ^= zobrist::blackToMove; }
 	result ^= zobrist::castlingRights[game.gameRules.castlingAbility];
-	if (game.gameRules.enPassantTarget) { result ^= zobrist::enPassantFile[((game.gameRules.enPassantTarget % 10) - 1)]; }
+	if (game.gameRules.enPassantTarget) { result ^= zobrist::enPassantFile[(game.gameRules.enPassantTarget % 10) - 1]; }
 
 	return result;
 }

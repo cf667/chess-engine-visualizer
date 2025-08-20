@@ -5,6 +5,8 @@
 #include "minimax.h"
 #include "iterative_deepening.h"
 #include "util.h"
+#include "evaluation.h"
+#include "transposition_table.h"
 
 #pragma warning(push, 4)
 
@@ -20,21 +22,35 @@ int main()
     else if (startupMode == "test")
     {
         // testing speed
-        Game game = Game("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1");
+        Game game = Game("2r5/2rK4/8/5pkp/2n5/8/5p2/8 w - - 2 97");
 
         /*Move move;
-        move.Init(CoordToIndex("e1"), CoordToIndex("f1"), QUIETMOVE, EMPTY);
+        move.Init(CoordToIndex("c3"), CoordToIndex("a4"), QUIETMOVE, EMPTY);
         game.MakeMove(move);
 
-        move.Init(CoordToIndex("a8"), CoordToIndex("b8"), QUIETMOVE, EMPTY);
+        move.Init(CoordToIndex("f6"), CoordToIndex("h5"), QUIETMOVE, EMPTY);
         game.MakeMove(move);
 
-        move.Init(CoordToIndex("a1"), CoordToIndex("b1"), QUIETMOVE, EMPTY);
+        move.Init(CoordToIndex("a4"), CoordToIndex("c3"), QUIETMOVE, EMPTY);
         game.MakeMove(move);
 
-        move.Init(CoordToIndex("e8"), CoordToIndex("g8"), CASTLE_KING, EMPTY);
+        move.Init(CoordToIndex("h5"), CoordToIndex("f6"), QUIETMOVE, EMPTY);
         game.MakeMove(move);
 
+        move.Init(CoordToIndex("c3"), CoordToIndex("a4"), QUIETMOVE, EMPTY);
+        game.MakeMove(move);
+
+        move.Init(CoordToIndex("f6"), CoordToIndex("h5"), QUIETMOVE, EMPTY);
+        game.MakeMove(move);
+
+        move.Init(CoordToIndex("a4"), CoordToIndex("c3"), QUIETMOVE, EMPTY);
+        game.MakeMove(move);
+
+        move.Init(CoordToIndex("h5"), CoordToIndex("f6"), QUIETMOVE, EMPTY);
+        game.MakeMove(move);
+
+        std::cout << transpositionTable[game.hashKey].repetition << "\n";
+		std::cout << GetGameStateValue(GetGameState(game)) << "\n";
         PrintPosition(game.position);*/
 
         std::cin >> startupMode;
@@ -48,9 +64,9 @@ int main()
             for (int i = 1; i <= depth; i++)
             {
                 auto startTime = std::chrono::high_resolution_clock::now();
-                Minimax(game, i, -0x10000, 0x10000, 0, false, std::nullopt);
+                float score = Minimax(game, i, -0x10000, 0x10000, 0, false, std::nullopt);
                 std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
-                std::cout << "Depth " << i << ": " << MoveToAlgebraic(game.bestMove) << " in " << duration << "\n";
+                std::cout << "Depth " << i << ": " << MoveToAlgebraic(game.bestMove) << " in " << duration << " score: " << score << "\n";
             }
             std::cout << "Total nodes searched: " << totalNodesSearched << "\n";
         }

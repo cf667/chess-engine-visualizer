@@ -8,6 +8,9 @@ class SearchInfo
 {
 public:
 	float score = 0;
+	uint8_t depth = 0;
+	uint8_t flag = 0; // 0: exact, 1: lowerbound, 2: upperbound
+	Move bestMove;
 	int repetition = 0;
 };
 

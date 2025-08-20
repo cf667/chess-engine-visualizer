@@ -10,8 +10,8 @@
 #pragma warning(push, 4)
 
 //position at the start of every game
-constexpr unsigned char startingPos[120] =
-{	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
+constexpr unsigned char startingPos[120] = {	
+	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
 	OUTOFBOUND,	OUTOFBOUND,	OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND, OUTOFBOUND,
 	OUTOFBOUND, BROOK,		BKNIGHT,	BBISHOP,	BQUEEN,		BKING,		BBISHOP,	BKNIGHT,	BROOK,		OUTOFBOUND,
 	OUTOFBOUND,	BPAWN,		BPAWN,		BPAWN,		BPAWN,		BPAWN,		BPAWN,		BPAWN,		BPAWN,		OUTOFBOUND,
@@ -188,23 +188,50 @@ skipEnPassant:
 	Game::gameRules.halfMoveCounter = fen[curPos] - '0';
 
 	Game::hashKey = GenerateKey(*this);
+	transpositionTable[Game::hashKey].repetition = 1; //add to transposition table
 }
 
 bool Game::MakeMove(Move move)
 {
+	const char captureSquare = Game::position[move.destination];
+
 	position[move.destination] = position[move.origin];
 	position[move.origin] = EMPTY;
 
 	if (move.flags == ENPASSANT)
 	{
-		if(toMove) { position[move.destination + 10] = EMPTY; }
-		else { position[move.destination - 10] = EMPTY; }
+		char takenPawnIndex;
+		char takenPawn;
+		if (toMove) { takenPawnIndex = move.destination + 10; }
+		else { takenPawnIndex = move.destination - 10; }
+
+		takenPawn = position[takenPawnIndex];
+		position[takenPawnIndex] = EMPTY;
+
+	//hash key
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(takenPawn)][translateToSmallBoard[takenPawnIndex]];
+	}
+	else if (IsCapture(move.flags))
+	{
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(captureSquare)][translateToSmallBoard[move.destination]];
+	}
+
+	char square = Game::position[move.destination];
+	Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.origin]]; //erase piece from origin
+	Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //add piece to destination
+
+	//delete enPassant from last move
+	if (Game::gameRules.enPassantTarget)
+	{
+		Game::hashKey ^= zobrist::enPassantFile[((Game::gameRules.enPassantTarget % 10) - 1)];
 	}
 
 	if (move.flags == DOUBLEPAWNPUSH)
 	{
 		if (toMove) { Game::gameRules.enPassantTarget = move.destination + 10; }
 		else { Game::gameRules.enPassantTarget = move.destination - 10; }
+
+		Game::hashKey ^= zobrist::enPassantFile[(Game::gameRules.enPassantTarget % 10) - 1];
 	}
 	else
 	{
@@ -214,24 +241,60 @@ bool Game::MakeMove(Move move)
 	switch (move.flags)
 	{
 	case PROMOTION_KNIGHT: case PROMOTION_KNIGHT_CAPTURE:
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //erase piece from origin
+
 		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (KNIGHT & 0b00000111);
+
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //add piece to destination
+
 		break;
 	case PROMOTION_BISHOP: case PROMOTION_BISHOP_CAPTURE:
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //erase piece from origin
+
 		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (BISHOP & 0b00000111);
+
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //add piece to destination
+
 		break;
 	case PROMOTION_ROOK: case PROMOTION_ROOK_CAPTURE:
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //erase piece from origin
+
 		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (ROOK & 0b00000111);
+
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //add piece to destination
+
 		break;
 	case PROMOTION_QUEEN: case PROMOTION_QUEEN_CAPTURE:
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //erase piece from origin
+
 		Game::position[move.destination] = (Game::position[move.destination] & ~0b00000111) | (QUEEN & 0b00000111);
+
+		square = Game::position[move.destination];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination]]; //add piece to destination
+
 		break;
 	}
+
+	//remove old castling ability
+	Game::hashKey ^= zobrist::castlingRights[Game::gameRules.castlingAbility];
 	
 	//castle
 	if (move.flags == CASTLE_KING)
 	{
 		position[move.destination - 1] = position[move.destination + 1];
 		position[move.destination + 1] = EMPTY;
+
+		square = Game::position[move.destination - 1];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination - 1]]; //erase piece from origin
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination + 1]]; //add piece to destination
+
 		if (Game::toMove) //remove castle ability
 		{
 			DisableCastlingWhite(Game::gameRules.castlingAbility);
@@ -243,8 +306,13 @@ bool Game::MakeMove(Move move)
 	}
 	else if (move.flags == CASTLE_QUEEN)
 	{
-		position[move.destination + 1] = position[move.destination - 2];
-		position[move.destination - 2] = EMPTY;
+		Game::position[move.destination + 1] = Game::position[move.destination - 2];
+		Game::position[move.destination - 2] = EMPTY;
+
+		square = Game::position[move.destination + 1];
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination - 2]]; //erase piece from origin
+		Game::hashKey ^= zobrist::position[PieceToHashIndex(square)][translateToSmallBoard[move.destination + 1]]; //add piece to destination
+
 		if (Game::toMove) //remove castle ability
 		{
 			DisableCastlingWhite(Game::gameRules.castlingAbility);
@@ -293,13 +361,15 @@ bool Game::MakeMove(Move move)
 		break;
 	}
 
+	//add new castling ability
+	Game::hashKey ^= zobrist::castlingRights[Game::gameRules.castlingAbility];
+
 	//50 move rule
 	if (GetPiece(Game::position[move.origin]) == PAWN || IsCapture(move.flags)) { Game::gameRules.halfMoveCounter = 0; }
 	else { Game::gameRules.halfMoveCounter++; }
 
 	Game::toMove = !Game::toMove;
-
-	Game::hashKey = GenerateKey(*this);
+	Game::hashKey ^= zobrist::blackToMove;
 
 	transpositionTable[Game::hashKey].repetition++;
 
@@ -339,12 +409,10 @@ bool Game::IsCheck(bool white)
 			else
 			{
 				if (targetPiece == BISHOP) { return true; }
-				if (targetPiece == PAWN && j == 1) { return true; }
+
+				if (targetPiece == PAWN && j == 1 && (i == 0 || i == 2) && white) { return true; }
+				if (targetPiece == PAWN && j == 1 && (i == 4 || i == 6) && !white) { return true; }
 			}
-
-			if (targetPiece == PAWN && j == 1 && (i == 0 || i == 2) && white) { return true; }
-
-			if (targetPiece == PAWN && j == 1 && (i == 4 || i == 6) && !white) { return true; }
 
 			if (targetPiece == KING && j == 1) { return true; }
 
