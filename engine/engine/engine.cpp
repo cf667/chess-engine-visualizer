@@ -16,6 +16,8 @@ using json = nlohmann::json;
 
 #pragma warning(push, 4)
 
+EngineSettings engineSettings;
+
 std::queue<std::string> msgQueue;
 std::mutex msgQueueMutex;
 std::condition_variable msgQueueReady;
@@ -25,7 +27,7 @@ void SocketMessageHandler(std::string msg, Game& game)
     json parsedMsg = json::parse(msg);
     switch (int(parsedMsg["id"]))
     {
-    case 2:
+    case ID_FEN:
     {
         std::string fen = parsedMsg["fen"];
         game = Game(fen.c_str());
@@ -36,7 +38,7 @@ void SocketMessageHandler(std::string msg, Game& game)
         socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
         break;
     }
-    case 3:
+    case ID_MOVE:
     {
         char msgOrigin = uint8_t(parsedMsg["origin"]);
         char msgDestination = uint8_t(parsedMsg["destination"]);
@@ -56,21 +58,33 @@ void SocketMessageHandler(std::string msg, Game& game)
         socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
         break;
     }
-    case 4:
+    case ID_MAKEBESTMOVE:
     {
         if (!IsRunning(GetGameState(game))) { break; }
-        auto start = std::chrono::high_resolution_clock::now();
-        Minimax(game, 3, -0x10000, 0x10000, 0, true);
-        auto end = std::chrono::high_resolution_clock::now();
-        std::chrono::duration<float> duration = end - start;
-        std::cout << "totalDuration: " << duration << "\n";
-        std::cout << "moveGen duration: " << totalDuration << "\n";
+
+        if (engineSettings.searchByDepth) { Minimax(game, engineSettings.searchDepth, -0x10000, 0x10000); }
+        else { TimeSearch(game, engineSettings.searchTime); }
+        
         game.MakeMove(game.bestMove);
+        std::cout << MoveToAlgebraic(game.bestMove) << "\n";
 
         json message;
         message["id"] = 1;
         message["position"] = game.position;
+
+        std::cout << "sending\n";
         socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
+        break;
+    }
+    case ID_SETTINGS:
+    {
+        engineSettings.connectedToGUI = true;
+        engineSettings.searchByDepth = parsedMsg["searchByDepth"];
+        engineSettings.searchDepth = parsedMsg["searchDepth"];
+        engineSettings.searchTime = std::chrono::milliseconds(parsedMsg["searchTime"]);
+        engineSettings.useAlphaBetaPruning = parsedMsg["useAlphaBetaPruning"];
+        engineSettings.useMoveSorting = parsedMsg["useMoveSorting"];
+        engineSettings.useTranspositionTable = parsedMsg["useTranspositionTable"];
         break;
     }
     }
@@ -157,8 +171,8 @@ bool UCIMessageHandler(std::string message, Game& game)
             msIncrement = std::stoi(message.substr(startIndex, endIndex));
         }
 
-        auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(msRemaining / 20 + msIncrement / 2);
-        std::cout << "info score cp " << TimeSearch(game, deadline) * 100 << std::endl;
+        std::chrono::milliseconds searchTime = std::chrono::milliseconds(msRemaining / 20 + msIncrement / 2);
+        std::cout << "info score cp " << TimeSearch(game, searchTime) * 100 << std::endl;
         std::cout << "bestmove " << MoveToAlgebraic(game.bestMove) << std::endl;
     }
 

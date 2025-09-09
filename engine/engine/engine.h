@@ -4,6 +4,23 @@
 
 #include "game.h"
 
+struct EngineSettings
+{
+	bool connectedToGUI = false;
+
+	bool searchByDepth = true;
+	int searchDepth = 6;
+	std::chrono::milliseconds searchTime = std::chrono::milliseconds(5000);
+	std::chrono::steady_clock::time_point searchDeadline = std::chrono::steady_clock::now();
+
+	bool useAlphaBetaPruning = true;
+	bool useMoveSorting = true;
+
+	bool useTranspositionTable = false;
+};
+
+extern EngineSettings engineSettings;
+
 extern std::queue<std::string> msgQueue;
 extern std::mutex msgQueueMutex;
 extern std::condition_variable msgQueueReady;

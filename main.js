@@ -10,8 +10,8 @@ const { spawn } = require("child_process");
 let enginePath;
 if(app.isPackaged) { enginePath = path.join(process.resourcesPath, "engine.exe"); }
 else { enginePath = path.join(__dirname, "engine", "x64", "Release", "engine.exe"); }
-const engineProc = spawn(enginePath);
-engineProc.stdin.write("socket\n");
+//const engineProc = spawn(enginePath);
+//engineProc.stdin.write("socket\n");
 
 // CREATE WINDOW
 
@@ -40,7 +40,7 @@ app.whenReady().then(() => {
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
-    engineProc.kill();
+    //engineProc.kill();
     app.quit()
   }
 });

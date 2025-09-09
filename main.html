@@ -5,15 +5,110 @@
     <meta http-equiv="Content-Security-Policy" content="script-src 'self' 'unsafe-inline';" />
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="flex flex-row items-center h-screen w-screen bg-neutral-900 border-2 border-blue-600">
-  <div id="game" class="flex flex-col justify-center items-center center gap-4 p-4 border-2 border-red-500 max-w-full w-full h-full">
-    <button id="make_best_move" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1">make best move</button>
-    <div id="chessboard" class="grid grid-cols-8 grid-rows-8 aspect-square w-[80vmin] max-h-screen border-4 border-neutral-100"></div>
-    <input type="text" id="fen_input" placeholder="fen" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1"/>
+
+<body class="flex flex-row items-center h-screen w-screen bg-neutral-900">
+
+
+
+  <div id="game" class="flex flex-col justify-center items-center center gap-4 p-4 max-w-full w-full h-full">
+    
+    <div class="absolute top-2 left-2 flex">
+      <button id="btn_game_view" class="border border-neutral-100 text-neutral-100 px-2 py-1">Game</button>
+      <button id="btn_settings_view" class="border border-neutral-100 text-neutral-100 px-2 py-1">Settings</button>
+    </div>
+    
+    <div id="game_view" class="flex flex-col justify-center items-center gap-4 w-full h-full">
+      <button id="make_best_move" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1">make best move</button>
+      <div id="chessboard" class="grid grid-cols-8 grid-rows-8 aspect-square w-[80vmin] max-h-screen border-4 border-neutral-100"></div>
+      <label class="text-neutral-100">
+        Import a position (confirm with enter):
+        <input type="text" id="fen_input" placeholder="FEN" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1"/>
+      </label>
+    </div>
+
+    <div id="settings_view" class="hidden flex flex-col justify-center items-center gap-4 w-full h-full text-neutral-100">
+      <h2 class="text-xl">Engine Settings</h2>
+      <label class="flex items-center gap-2">
+        Search by...
+        <span class="text-neutral-100">Depth</span>
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input type="checkbox" id="search_mode" class="sr-only peer">
+          <div class="w-11 h-6 bg-neutral-700 rounded-full 
+                      after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
+                      after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
+                      peer-checked:after:translate-x-5">
+          </div>
+        </label>
+        <span class="text-neutral-100">Time</span>
+      </label>
+      <label id="depth_label" class="flex items-center gap-2">
+        Search Depth:
+        <input 
+          type="range" 
+          id="search_depth" 
+          min="1" 
+          max="7" 
+          value="6" 
+          class="w-40 accent-neutral-100"
+        />
+        <span id="depth_value" class="text-neutral-100">6</span>
+      </label>
+      <label id="time_label" class="hidden">
+        Search Time (ms):
+        <input type="number" id="search_time" class="bg-neutral-800 border border-neutral-100 text-neutral-100 px-2 py-1 w-28" value="5000" />
+      </label>
+      <label>
+        Alpha-Beta-Pruning:
+        <input type="checkbox" id="enable_alpha_beta" checked />
+      </label>
+      <label>
+        Move Sorting:
+        <input type="checkbox" id="enable_move_sorting" checked />
+      </label>
+      <label>
+        Transposition Table:
+        <input type="checkbox" id="enable_transposition_table" unchecked />
+      </label>
+      <label>
+        Evaluation Style:
+        <select id="eval_style" class="bg-neutral-800 border border-neutral-100 text-neutral-100 px-2 py-1">
+          <option value="material">Material Only</option>
+          <option value="basic">Basic Positional</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </label>
+      <div class="flex justify-end mt-4">
+        <button 
+          id="apply_changes" 
+          class="bg-neutral-700 text-neutral-100 px-4 py-2 rounded"
+        >
+          Apply Changes
+        </button>
+      </div>
+    </div>
   </div>
-  <div id="visualization" class="flex flex-grow border-2 border-red-500 items-center justify-center p-4 w-full h-full">
-    <canvas id="tree-canvas" class="border-4 border-neutral-100 max-w-full max-h-full w-full h-full"></canvas>
+
+
+
+  <div id="visualization" class="flex flex-col items-center justify-center p-4 w-full h-full">
+    <div class="top-2 right-2">
+      <select id="visualization_select" class="bg-neutral-800 border border-neutral-100 text-neutral-100 px-2 py-1">
+        <option value="tree">Search Tree</option>
+        <option value="heatmap">Heatmap</option>
+        <option value="evalgraph">Evaluation Graph</option>
+      </select>
+    </div>
+    
+    <div class="flex-grow flex items-center justify-center p-4 w-full h-full">
+      <canvas id="tree-canvas" class="border-4 border-neutral-100 max-w-full max-h-full w-full h-full"></canvas>
+    </div>
   </div>
+
+
+
   <script src="renderer.js"></script>
+
+
+  
 </body>
 </html>

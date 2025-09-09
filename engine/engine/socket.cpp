@@ -2,6 +2,7 @@
 
 #include "socket.h"
 #include "engine.h"
+#include "util.h"
 
 #pragma warning(push, 4)
 
@@ -17,7 +18,7 @@ void SendJSON(json message)
 void SendNewNode(int nodeId, int depth, int parentId, std::string previousMove)
 {
     json message;
-    message["id"] = 5;
+    message["id"] = ID_NEWNODE;
     message["nodeId"] = nodeId;
     message["depth"] = depth;
     message["parentId"] = parentId;
@@ -29,7 +30,7 @@ void SendNewNode(int nodeId, int depth, int parentId, std::string previousMove)
 void SendNodeScore(int nodeId, float score)
 {
     json message;
-    message["id"] = 6;
+    message["id"] = ID_NODESCORE;
     message["nodeId"] = nodeId;
     message["score"] = score;
     SendJSON(message);

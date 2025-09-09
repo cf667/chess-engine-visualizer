@@ -254,4 +254,13 @@ constexpr uint8_t EXACT = 0x1;
 constexpr uint8_t LOWERBOUND = 0x2;
 constexpr uint8_t UPPERBOUND = 0x3;
 
+//message IDs
+constexpr unsigned int ID_RENDERBOARD = 1;
+constexpr unsigned int ID_FEN = 2;
+constexpr unsigned int ID_MOVE = 3;
+constexpr unsigned int ID_MAKEBESTMOVE = 4;
+constexpr unsigned int ID_NEWNODE = 5;
+constexpr unsigned int ID_NODESCORE = 6;
+constexpr unsigned int ID_SETTINGS = 7;
+
 void PrintPosition(unsigned char* pos);

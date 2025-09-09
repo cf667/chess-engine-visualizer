@@ -5,6 +5,7 @@
 #include "util.h"
 #include "socket.h"
 #include "transposition_table.h"
+#include "engine.h"
 
 #pragma warning(push, 4)
 
@@ -12,43 +13,25 @@ int currentId = 1;
 int searchDepth = -1;
 int totalNodesSearched;
 
-Move bestMove;
-
 bool MoveComparator(Move a, Move b)
 {
-	if (IsCapture(b.flags)) { return false; } //always prefer captures
-	if (b.origin == bestMove.origin && b.destination == bestMove.destination && b.flags == bestMove.flags) { return false; }
+	// if (IsCapture(b.flags)) { return false; }	<- old sorting
+
+	if (!IsCapture(b.flags)) { return true; }
+	if (!IsCapture(a.flags)) { return false; }
+	if (PIECE_VALUES[GetPiece(b.capture)] > PIECE_VALUES[GetPiece(b.capture)]) { return false; }
 	return true;
 }
 
-float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int parentId, bool visualize, std::optional<std::chrono::steady_clock::time_point> deadline)
+float Minimax(Game& game, const unsigned int depth, float alpha, float beta)
 {
 	float originalAlpha = alpha;
 
-	if (deadline.has_value() && std::chrono::steady_clock::now() >= deadline.value()) 
+	if (!engineSettings.searchByDepth && std::chrono::steady_clock::now() >= engineSettings.searchDeadline)
 	{ 
 		return BREAK_SEARCH; 
 	}
 	totalNodesSearched++;
-	int nodeId = 0;
-	bool isRoot;
-	if (visualize)
-	{
-		isRoot = false;
-		if (searchDepth == -1) { isRoot = true; }
-
-		nodeId = currentId;
-		currentId++;
-		if (isRoot)
-		{
-			searchDepth = depth;
-			//SendNewNode(nodeId, 0, 0, MoveToAlgebraic(game.moveHist.back()));
-		}
-		else
-		{
-			//SendNewNode(nodeId, searchDepth - depth, parentId, MoveToAlgebraic(game.moveHist.back()));
-		}
-	}
 
 	SearchInfo* searchInfo = &transpositionTable[game.hashKey];
 	if (searchInfo->depth >= depth)
@@ -82,7 +65,6 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 	if (!depth) 
 	{ 
 		float score = EvaluatePosition(game);
-		if (visualize) { SendNodeScore(nodeId, float(score)); }
 		return score * colorMultiplier; //return evaluation relative to the side to move -> negative always bad / positive always good
 	} 
 
@@ -90,7 +72,6 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 	if (!IsRunning(gameState)) 
 	{ 
 		float score = GetGameStateValue(gameState);
-		if (visualize) { SendNodeScore(nodeId, float(score)); }
 		return score * colorMultiplier; 
 	}
 
@@ -110,7 +91,7 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 		Game gameCopy = game;
 		game.MakeMove(move);
 
-		currentScore = -Minimax(game, depth - 1, -beta, -alpha, nodeId, visualize, deadline); //score of best enemy move
+		currentScore = -Minimax(game, depth - 1, -beta, -alpha); //score of best enemy move
 
 		transpositionTable[game.hashKey].repetition--;
 		game = gameCopy;
@@ -119,8 +100,6 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 
 		if (currentScore >= beta)
 		{
-			if (visualize) { SendNodeScore(nodeId, alpha * colorMultiplier); }
-
 			if (searchInfo->depth < depth) 
 			{
 				searchInfo->score = beta;
@@ -146,13 +125,6 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta, int
 			bestScore = currentScore;
 			bestMove = move;
 		}*/
-	}
-
-	if (visualize)
-	{
-		SendNodeScore(nodeId, float(alpha) * colorMultiplier);
-		//SendNodeScore(nodeId, float(bestScore) * colorMultiplier);
-		if (isRoot) { searchDepth = -1; }
 	}
 
 	game.bestMove = bestMove;

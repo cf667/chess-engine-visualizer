@@ -1,3 +1,13 @@
+// MESSAGE IDs
+
+const ID_RENDERBOARD = 1;
+const ID_FEN = 2;
+const ID_MOVE = 3;
+const ID_MAKEBESTMOVE = 4;
+const ID_NEWNODE = 5;
+const ID_NODESCORE = 6;
+const ID_SETTINGS = 7;
+
 // MESSAGE HANDLERS
 
 //input
@@ -5,13 +15,13 @@
 function inputMessageHandler(message) {
   switch (message.id)
   {
-    case 1:
+    case ID_RENDERBOARD:
       renderPosition(message.position);
       break;
-    case 5:
+    case ID_NEWNODE:
       getNewNode(message.nodeId, message.depth, message.parentId, message.previousMove);
       break;
-    case 6:
+    case ID_NODESCORE:
       getNodeScore(message.nodeId, message.score);
       break;
   }
@@ -20,7 +30,7 @@ function inputMessageHandler(message) {
 //send fen (ID 2)
 
 function sendFen(message) {
-  const jsonMsg = { id: 2, fen: message };
+  const jsonMsg = { id: ID_FEN, fen: message };
   ws.send(JSON.stringify(jsonMsg));
 }
 
@@ -29,14 +39,37 @@ function sendFen(message) {
 let originSquare = 0;
 let destinationSquare = 0;
 function sendMove() {
-  const jsonMsg = { id: 3, origin: parseInt(originSquare), destination: parseInt(destinationSquare) };
+  const jsonMsg = { id: ID_MOVE, origin: parseInt(originSquare), destination: parseInt(destinationSquare) };
   ws.send(JSON.stringify(jsonMsg));
 }
 
 //send "make best move" command (ID 4)
 
 function sendMakeBestMove() {
-  const jsonMsg = { id: 4 };
+  const jsonMsg = { id: ID_MAKEBESTMOVE };
+  ws.send(JSON.stringify(jsonMsg));
+}
+
+//send settings
+
+const searchMode = document.getElementById("search_mode");
+const depthLabel = document.getElementById("depth_label");
+const depthSlider = document.getElementById("search_depth");
+const timeInput = document.getElementById("search_time");
+const alphaBetaCheckbox = document.getElementById("enable_alpha_beta");
+const moveSortingCheckbox = document.getElementById("enable_move_sorting");
+const transpositionCheckbox = document.getElementById("enable_transposition_table");
+
+function sendSettings() {
+  const jsonMsg = {
+    id: ID_SETTINGS, 
+    searchByDepth: !searchMode.checked, 
+    searchDepth: parseInt(depthSlider.value), 
+    searchTime: parseInt(timeInput.value), 
+    useAlphaBetaPruning: alphaBetaCheckbox.checked, 
+    useMoveSorting: moveSortingCheckbox.checked, 
+    useTranspositionTable: transpositionCheckbox.checked };
+
   ws.send(JSON.stringify(jsonMsg));
 }
 
@@ -86,6 +119,45 @@ function initSocket() {
 initSocket();
 
 // RENDERING
+
+//switch between sections
+
+const btnGame = document.getElementById("btn_game_view");
+const btnSettings = document.getElementById("btn_settings_view");
+const gameView = document.getElementById("game_view");
+const settingsView = document.getElementById("settings_view");
+
+btnGame.addEventListener("click", () => {
+  gameView.classList.remove("hidden");
+  settingsView.classList.add("hidden");
+});
+
+btnSettings.addEventListener("click", () => {
+  settingsView.classList.remove("hidden");
+  gameView.classList.add("hidden");
+});
+
+//depth search slider
+
+const depthValue = document.getElementById("depth_value");
+
+depthSlider.addEventListener("input", () => {
+  depthValue.textContent = depthSlider.value;
+});
+
+//switch between depth and time search
+
+const timeLabel = document.getElementById("time_label");
+
+searchMode.addEventListener("change", () => {
+  if (searchMode.checked) {
+    depthLabel.classList.add("hidden");
+    timeLabel.classList.remove("hidden");
+  } else {
+    depthLabel.classList.remove("hidden");
+    timeLabel.classList.add("hidden");
+  }
+});
 
 //board
 
@@ -440,6 +512,11 @@ fenTextbox.addEventListener("keydown", (event) => {
     sendFen(fenTextbox.value);
   }
 });
+
+//apply settings
+
+applyChangesButton = document.getElementById("apply_changes");
+applyChangesButton.addEventListener("click", sendSettings);
 
 //make best move
 

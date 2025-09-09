@@ -446,22 +446,21 @@ MoveList Game::GetAllMoves()
 
 	bool inCheck;
 
+	char originSquare;
+	char destinationSquare;
+
 	for (char i = 0; i < 120; i++) //iterate through board
 	{
-		if (!(i % 10))
-		{
-			//std::cout << std::endl;
-		}
-		//std::cout << i << " ";
+		originSquare = Game::position[i];
 
-		if ((Game::position[i] >> 5) & 1 || (Game::position[i] >> 4) & 1 || ((Game::position[i] >> 3) & 1) != Game::toMove) //if square is out of bound, empty or piece is the wrong color
+		if (IsOutOfBound(originSquare) || IsEmpty(originSquare) || IsWhite(originSquare) != Game::toMove) //if square is out of bound, empty or piece is the wrong color
 		{
 			continue;
 		}
 
-		if ((Game::position[i] & 0b111) == PAWN) //pawn
+		if (GetPiece(originSquare) == PAWN) //pawn
 		{
-			if ((Game::position[i] >> 3) & 1) //check for color
+			if (IsWhite(originSquare)) //check for color
 			{
 				pawnDirection = -10;
 				doublePushRank = 80;
@@ -473,8 +472,10 @@ MoveList Game::GetAllMoves()
 				doublePushRank = 30;
 				promotionRank = 80;
 			}
+
+			destinationSquare = Game::position[i + pawnDirection];
 			
-			if ((Game::position[i + pawnDirection] >> 4) & 1)
+			if (IsEmpty(destinationSquare))
 			{
 				if (i > promotionRank && i < promotionRank + 9) //promotion
 				{
@@ -508,7 +509,9 @@ MoveList Game::GetAllMoves()
 					*this = gameCopy;
 				}
 
-				if (i > doublePushRank && i < doublePushRank + 9 && (Game::position[i + pawnDirection * 2] >> 4) & 1) //double pawn push
+				destinationSquare = Game::position[i + pawnDirection * 2];
+
+				if (i > doublePushRank && i < doublePushRank + 9 && IsEmpty(destinationSquare)) //double pawn push
 				{
 					curMove.Init(i, i + pawnDirection * 2, DOUBLEPAWNPUSH, EMPTY);
 
@@ -524,13 +527,15 @@ MoveList Game::GetAllMoves()
 				}
 			}
 
-			if (!((Game::position[i + pawnDirection + 1] >> 5) & 1) && !((Game::position[i + pawnDirection + 1] >> 4) & 1) && ((Game::position[i + pawnDirection + 1] >> 3) & 1) != Game::toMove) //right side capture
+			destinationSquare = Game::position[i + pawnDirection + 1];
+
+			if (!IsOutOfBound(destinationSquare) && !IsEmpty(destinationSquare) && IsWhite(destinationSquare) != Game::toMove) //right side capture
 			{
 				if (i > promotionRank && i < promotionRank + 9) //promotion
 				{
 					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
-						curMove.Init(i, i + pawnDirection + 1, promotion + CAPTURE, Game::position[i + pawnDirection + 1]);
+						curMove.Init(i, i + pawnDirection + 1, promotion + CAPTURE, destinationSquare);
 
 						Game gameCopy = *this;
 						Game::MakeMove(curMove);
@@ -545,7 +550,7 @@ MoveList Game::GetAllMoves()
 				}
 				else
 				{
-					curMove.Init(i, i + pawnDirection + 1, CAPTURE, Game::position[i + pawnDirection + 1]);
+					curMove.Init(i, i + pawnDirection + 1, CAPTURE, destinationSquare);
 
 					Game gameCopy = *this;
 					Game::MakeMove(curMove);
@@ -558,13 +563,16 @@ MoveList Game::GetAllMoves()
 					*this = gameCopy;
 				}
 			}
-			if (!((Game::position[i + pawnDirection - 1] >> 5) & 1) && !((Game::position[i + pawnDirection - 1] >> 4) & 1) && ((Game::position[i + pawnDirection - 1] >> 3) & 1) != Game::toMove) //left side capture
+
+			destinationSquare = Game::position[i + pawnDirection - 1];
+
+			if (!IsOutOfBound(destinationSquare) && !IsEmpty(destinationSquare) && IsWhite(destinationSquare) != Game::toMove) //left side capture
 			{
 				if (i > promotionRank && i < promotionRank + 9) //promotion
 				{
 					for (char promotion = PROMOTION_KNIGHT; promotion <= PROMOTION_QUEEN; promotion++)
 					{
-						curMove.Init(i, i + pawnDirection - (char)1, promotion + CAPTURE, Game::position[i + pawnDirection - 1]);
+						curMove.Init(i, i + pawnDirection - (char)1, promotion + CAPTURE, destinationSquare);
 
 						Game gameCopy = *this;
 						Game::MakeMove(curMove);
@@ -579,7 +587,7 @@ MoveList Game::GetAllMoves()
 				}
 				else
 				{
-					curMove.Init(i, i + pawnDirection - (char)1, CAPTURE, Game::position[i + pawnDirection - 1]);
+					curMove.Init(i, i + pawnDirection - (char)1, CAPTURE, destinationSquare);
 
 					Game gameCopy = *this;
 					Game::MakeMove(curMove);
@@ -626,13 +634,17 @@ MoveList Game::GetAllMoves()
 		}
 		else //every other piece
 		{
-			for (char offset : offsets[Game::position[i] & 0b111]) //iterate through moveset
+			for (char offset : offsets[GetPiece(originSquare)]) //iterate through moveset
 			{
-				if (Game::position[i] & 1) //check if piece can slide (queen, rook, bishop)
+				if (originSquare & 1) //check if piece can slide (queen, rook, bishop)
 				{
-					for (char slide = 1; !((Game::position[i + offset * slide] >> 5) & 1); slide++) //as long as its not off the board
+					for (char slide = 1; slide < 8; slide++)
 					{
-						if ((Game::position[i + offset * slide] >> 4) & 1) //empty square
+						destinationSquare = Game::position[i + offset * slide];
+
+						if (IsOutOfBound(destinationSquare)) { break; } //out of bound
+
+						if (IsEmpty(destinationSquare)) //empty square
 						{
 							curMove.Init(i, i + offset * slide, QUIETMOVE, EMPTY);
 
@@ -646,9 +658,9 @@ MoveList Game::GetAllMoves()
 							transpositionTable[Game::hashKey].repetition--;
 							*this = gameCopy;
 						}
-						else if (((Game::position[i + offset * slide] >> 3) & 1) != Game::toMove) //enemy piece
+						else if (IsWhite(destinationSquare) != Game::toMove) //enemy piece
 						{
-							curMove.Init(i, i + offset * slide, CAPTURE, Game::position[i + offset * slide]);
+							curMove.Init(i, i + offset * slide, CAPTURE, destinationSquare);
 
 							Game gameCopy = *this;
 							Game::MakeMove(curMove);
@@ -669,12 +681,11 @@ MoveList Game::GetAllMoves()
 				}
 				else //pieces that cant slide (king, knight)
 				{
-					if ((Game::position[i + offset] >> 5) & 1) //out of bound
-					{
-						continue;
-					}
+					destinationSquare = Game::position[i + offset];
 
-					if ((Game::position[i + offset] >> 4) & 1) //empty square
+					if (IsOutOfBound(destinationSquare)) { continue; } //out of bound
+
+					if (IsEmpty(destinationSquare)) //empty square
 					{
 						curMove.Init(i, i + offset, QUIETMOVE, EMPTY);
 
@@ -689,7 +700,7 @@ MoveList Game::GetAllMoves()
 						*this = gameCopy;
 
 						//castling
-						if ((Game::position[i] & 0b111) == KING && (offset == 1 || offset == -1)) //if king moves right/left, ...
+						if (GetPiece(originSquare) == KING && (offset == 1 || offset == -1)) //if king moves right/left, ...
 						{
 							if (Game::IsCheck(Game::toMove)) //... isnt in check right now ...
 							{
@@ -704,7 +715,7 @@ MoveList Game::GetAllMoves()
 							transpositionTable[Game::hashKey].repetition--;
 							*this = gameCopy;
 
-							if (!inCheck && (Game::position[i + offset * 2] >> 4) & 1) //... and isnt in check if he moves right/left
+							if (!inCheck && IsEmpty(Game::position[i + offset * 2])) //... and isnt in check if he moves right/left
 							{
 								char flag = CASTLE_KING;
 								if (offset == -1)
@@ -718,7 +729,7 @@ MoveList Game::GetAllMoves()
 								}
 
 								if (((Game::gameRules.castlingAbility >> (Game::toMove * 2 + temp)) & 1) && //check castle ability
-									((Game::position[i + offset * 2 - temp] >> 4) & 1))							//check if squares are empty
+									IsEmpty(Game::position[i + offset * 2 - temp]))							//check if square is empty
 								{
 									curMove.Init(i, i + offset * 2, flag, EMPTY);
 
@@ -737,9 +748,9 @@ MoveList Game::GetAllMoves()
 							;
 						}
 					}
-					else if (((Game::position[i + offset] >> 3) & 1) != Game::toMove) //enemy piece
+					else if (IsWhite(destinationSquare) != Game::toMove) //enemy piece
 					{
-						curMove.Init(i, i + offset, CAPTURE, Game::position[i + offset]);
+						curMove.Init(i, i + offset, CAPTURE, destinationSquare);
 
 						Game gameCopy = *this;
 						Game::MakeMove(curMove);

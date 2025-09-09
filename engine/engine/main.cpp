@@ -21,8 +21,53 @@ int main()
     else if (startupMode == "socket") { InitSocket(); }
     else if (startupMode == "test")
     {
+        while (true)
+        {
+            Game game = Game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+
+            std::cin >> startupMode;
+            if (startupMode == "depth")
+            {
+                int depth;
+                std::cin >> depth;
+
+                std::cout << std::endl;
+
+                for (int i = 1; i <= depth; i++)
+                {
+                    auto startTime = std::chrono::high_resolution_clock::now();
+                    float score = Minimax(game, i, -0x10000, 0x10000);
+                    std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
+                    std::cout << "Depth " << i << ": " << MoveToAlgebraic(game.bestMove) << " in " << duration << " score: " << score << "\n";
+                }
+                std::cout << "Total nodes searched: " << totalNodesSearched << "\n";
+            }
+            else if (startupMode == "time")
+            {
+                int time;
+                std::cin >> time;
+
+                int reachedDepth = 0;
+
+                std::chrono::milliseconds searchTime = std::chrono::milliseconds(time * 1000);
+                TimeSearch(game, searchTime, &reachedDepth);
+                std::cout << "Reached depth " << reachedDepth << " - best move: " << MoveToAlgebraic(game.bestMove) << "\n";
+            }
+            else if (startupMode == "perft")
+            {
+                int depth;
+                std::cin >> depth;
+                auto startTime = std::chrono::high_resolution_clock::now();
+                Perft(game, depth);
+                std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
+                std::cout << "duration: " << duration;
+            }
+
+			transpositionTable.clear();
+        }
+
         // testing speed
-        Game game = Game("2r5/2rK4/8/5pkp/2n5/8/5p2/8 w - - 2 97");
+        
 
         /*Move move;
         move.Init(CoordToIndex("c3"), CoordToIndex("a4"), QUIETMOVE, EMPTY);
@@ -53,43 +98,7 @@ int main()
 		std::cout << GetGameStateValue(GetGameState(game)) << "\n";
         PrintPosition(game.position);*/
 
-        std::cin >> startupMode;
-        if (startupMode == "depth")
-        {
-            int depth;
-            std::cin >> depth;
-
-            std::cout << std::endl;
-
-            for (int i = 1; i <= depth; i++)
-            {
-                auto startTime = std::chrono::high_resolution_clock::now();
-                float score = Minimax(game, i, -0x10000, 0x10000, 0, false, std::nullopt);
-                std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
-                std::cout << "Depth " << i << ": " << MoveToAlgebraic(game.bestMove) << " in " << duration << " score: " << score << "\n";
-            }
-            std::cout << "Total nodes searched: " << totalNodesSearched << "\n";
-        }
-        else if (startupMode == "time")
-        {
-            int time;
-            std::cin >> time;
-
-            int reachedDepth = 0;
-
-            auto deadline = std::chrono::high_resolution_clock::now() + std::chrono::seconds(time);
-            TimeSearch(game, deadline, &reachedDepth);
-            std::cout << "Reached depth " << reachedDepth << " - best move: " << MoveToAlgebraic(game.bestMove) << "\n";
-        }
-        else if (startupMode == "perft")
-        {
-            int depth;
-            std::cin >> depth;
-            auto startTime = std::chrono::high_resolution_clock::now();
-            Perft(game, depth);
-            std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
-            std::cout << "duration: " << duration;
-        }
+        
     }
 
     return 0;
