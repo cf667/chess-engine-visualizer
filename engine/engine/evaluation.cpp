@@ -38,9 +38,12 @@ unsigned char GetGameState(Game& game)
 int EvaluateMaterial(Game& game)
 {
 	int result = 0;
-	for (unsigned char square : game.position)
+	for (int i = 0; i < 120; i++)
 	{
-		result += PIECE_VALUES[GetPiece(square)] * GetColorMultiplier(IsWhite(square));
+		unsigned char square = game.position[i];
+		unsigned char piece = GetPiece(square);
+		int value = PIECE_VALUES[piece] + PIECE_TABLE[IsWhite(square)][piece][i];
+		result += value * GetColorMultiplier(IsWhite(square));
 	}
 	return result;
 }

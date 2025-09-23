@@ -23,7 +23,8 @@ int main()
     {
         while (true)
         {
-            Game game = Game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+            /*Game game = Game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");*/
+            Game game = Game("4K3/8/8/3Q4/4P1k1/8/8/8 w - - 97 162");
 
             std::cin >> startupMode;
             if (startupMode == "depth")

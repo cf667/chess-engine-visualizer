@@ -17,10 +17,17 @@ bool MoveComparator(Move a, Move b)
 {
 	// if (IsCapture(b.flags)) { return false; }	<- old sorting
 
-	if (!IsCapture(b.flags)) { return true; }
-	if (!IsCapture(a.flags)) { return false; }
-	if (PIECE_VALUES[GetPiece(b.capture)] > PIECE_VALUES[GetPiece(b.capture)]) { return false; }
-	return true;
+	if (IsCapture(b.flags) != IsCapture(a.flags))
+	{
+		return IsCapture(a.flags);
+	}
+
+	if (IsCapture(b.flags))
+	{
+		return PIECE_VALUES[GetPiece(a.capture)] > PIECE_VALUES[GetPiece(b.capture)];
+	}
+
+	return false;
 }
 
 int Minimax(Game& game, const unsigned int depth, int alpha, int beta)
