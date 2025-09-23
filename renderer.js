@@ -75,14 +75,14 @@ function sendSettings() {
 
 //get node data (ID 5 / 6)
 
-// let nodes = [
-//   { id: 1, depth: 0, parentId: 0, x: 0, y: 0, previousMove: 0, score: "no score" },
-//   { id: 2, depth: 1, parentId: 1, x: 0, y: 0, previousMove: "d2d3", score: "no score" },
-//   { id: 3, depth: 1, parentId: 1, x: 0, y: 0, previousMove: "d2d4", score: "no score" },
-//   { id: 4, depth: 2, parentId: 3, x: 0, y: 0, previousMove: "d4d5", score: "-4" },
-//   { id: 5, depth: 2, parentId: 3, x: 0, y: 0, previousMove: "d4e4", score: "5" }
-// ];
-let nodes = [];
+let nodes = [
+  { id: 1, depth: 0, parentId: 0, previousMove: 0,      score: "no score",  childCount: 2},
+  { id: 2, depth: 1, parentId: 1, previousMove: "d2d3", score: "no score",  childCount: 2 },
+  { id: 3, depth: 1, parentId: 1, previousMove: "d2d4", score: "no score",  childCount: 0 },
+  { id: 4, depth: 2, parentId: 3, previousMove: "d4d5", score: "-4",        childCount: 0 },
+  { id: 5, depth: 2, parentId: 3, previousMove: "d4e4", score: "5",         childCount: 0 }
+];
+//let nodes = [];
 function getNewNode(nodeId, depth, parentId, previousMove) {
   nodes.push({ id: nodeId, depth: depth, parentId: parentId, previousMove: previousMove, score: "no score", childCount: 0 });
   if (parentId) {

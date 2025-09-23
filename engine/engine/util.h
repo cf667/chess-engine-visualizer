@@ -222,7 +222,7 @@ constexpr void DisableCastlingWhiteKing(char& castlingRights) { castlingRights &
 constexpr void DisableCastlingWhiteQueen(char& castlingRights) { castlingRights &= 0b00000111; }
 
 //values
-constexpr unsigned char PIECE_VALUES[] = { 0, 9, 1, 5, 3, 3 };
+constexpr unsigned int PIECE_VALUES[] = { 0, 900, 100, 500, 300, 300 };
 
 //game states
 constexpr unsigned char GAMESTATE_RUNNING = 0x1;								//1st bit
@@ -240,10 +240,10 @@ constexpr bool IsRunning(unsigned char gameState)
 	return gameState & 0b00000001;
 }
 
-constexpr float GetGameStateValue(unsigned char gameState)
+constexpr int GetGameStateValue(unsigned char gameState)
 {
-	if (gameState & 0b00000010) { return -0x1000; }
-	if (gameState & 0b00000100) { return 0x1000; }
+	if (gameState & 0b00000010) { return -0x100000; }
+	if (gameState & 0b00000100) { return 0x100000; }
 	return 0;
 }
 

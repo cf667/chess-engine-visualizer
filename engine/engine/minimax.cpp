@@ -23,9 +23,9 @@ bool MoveComparator(Move a, Move b)
 	return true;
 }
 
-float Minimax(Game& game, const unsigned int depth, float alpha, float beta)
+int Minimax(Game& game, const unsigned int depth, int alpha, int beta)
 {
-	float originalAlpha = alpha;
+	int originalAlpha = alpha;
 
 	if (!engineSettings.searchByDepth && std::chrono::steady_clock::now() >= engineSettings.searchDeadline)
 	{ 
@@ -64,21 +64,21 @@ float Minimax(Game& game, const unsigned int depth, float alpha, float beta)
 	int colorMultiplier = GetColorMultiplier(game.toMove);
 	if (!depth) 
 	{ 
-		float score = EvaluatePosition(game);
+		int score = EvaluatePosition(game);
 		return score * colorMultiplier; //return evaluation relative to the side to move -> negative always bad / positive always good
 	} 
 
 	unsigned char gameState = GetGameState(game);
 	if (!IsRunning(gameState)) 
 	{ 
-		float score = GetGameStateValue(gameState);
+		int score = GetGameStateValue(gameState);
 		return score * colorMultiplier; 
 	}
 
 	//because the evaluation is always relative, each side always wants to maximize their score (black would typically want to minimize)
 	int bestScore = INT32_MIN;
 	Move bestMove;
-	float currentScore;
+	int currentScore;
 	MoveList moveList = game.GetLegalMoves();
 	bestMove = transpositionTable[game.hashKey].bestMove;
 	std::sort(moveList.list, moveList.list + moveList.count, MoveComparator); //sort moves so that captures are always first

@@ -36,7 +36,7 @@ int main()
                 for (int i = 1; i <= depth; i++)
                 {
                     auto startTime = std::chrono::high_resolution_clock::now();
-                    float score = Minimax(game, i, -0x10000, 0x10000);
+                    int score = Minimax(game, i, -0x10000, 0x10000);
                     std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
                     std::cout << "Depth " << i << ": " << MoveToAlgebraic(game.bestMove) << " in " << duration << " score: " << score << "\n";
                 }

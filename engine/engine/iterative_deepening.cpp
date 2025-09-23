@@ -10,9 +10,9 @@
 
 float TimeSearch(Game& game, std::chrono::milliseconds searchTime, int* reachedDepth)
 {
-	float result = 0;
+	int result = 0;
 	Move bestMove;
-	float currentScore = 0;
+	int currentScore = 0;
 	int currentDepth = 1;
 	bool oldSearch = engineSettings.searchByDepth;
 

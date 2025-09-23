@@ -45,13 +45,13 @@ int EvaluateMaterial(Game& game)
 	return result;
 }
 
-float EvaluatePosition(Game& game)
+int EvaluatePosition(Game& game)
 {
 	unsigned char gameState = GetGameState(game);
 	if (!IsRunning(gameState)) { return GetGameStateValue(gameState); }
 
-	float result = 0;
-	result += float(EvaluateMaterial(game));
+	int result = 0;
+	result += EvaluateMaterial(game);
 	return result;
 }
 
