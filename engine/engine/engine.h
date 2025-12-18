@@ -1,4 +1,7 @@
 #pragma once
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 #include <queue>
 #include <mutex>
 
@@ -8,7 +11,7 @@ struct EngineSettings
 {
 	bool connectedToGUI = false;
 
-	bool searchByDepth = true;
+	bool searchByDepth = false;
 	int searchDepth = 6;
 	std::chrono::milliseconds searchTime = std::chrono::milliseconds(5000);
 	std::chrono::steady_clock::time_point searchDeadline = std::chrono::steady_clock::now();
@@ -24,6 +27,9 @@ extern EngineSettings engineSettings;
 extern std::queue<std::string> msgQueue;
 extern std::mutex msgQueueMutex;
 extern std::condition_variable msgQueueReady;
+
+extern json searchTimeGraphData;
+extern json evalGraphData;
 
 void SocketMessageHandler(std::string msg, Game& game);
 

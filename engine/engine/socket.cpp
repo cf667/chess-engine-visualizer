@@ -39,11 +39,12 @@ void SendNodeScore(int nodeId, float score)
 
 void InitSocket()
 {
+    engineSettings.connectedToGUI = true;
     auto app = uWS::App().ws<void*>
         (
             "/*",
             {
-                .maxPayloadLength = 16 * 1024, //16KB
+                .maxPayloadLength = 32 * 1024, //16KB
                 .open = [](auto* ws)
                 {
                     mySocket = ws;

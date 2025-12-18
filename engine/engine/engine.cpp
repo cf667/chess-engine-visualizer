@@ -1,8 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
-
 #include <iostream>
 #include <mutex>
 
@@ -22,6 +19,9 @@ std::queue<std::string> msgQueue;
 std::mutex msgQueueMutex;
 std::condition_variable msgQueueReady;
 
+json searchTimeGraphData;
+json evalGraphData;
+
 void SocketMessageHandler(std::string msg, Game& game)
 {
     json parsedMsg = json::parse(msg);
@@ -33,7 +33,7 @@ void SocketMessageHandler(std::string msg, Game& game)
         game = Game(fen.c_str());
 
         json message;
-        message["id"] = 1;
+        message["id"] = ID_RENDERBOARD;
         message["position"] = game.position;
         socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
         break;
@@ -44,7 +44,7 @@ void SocketMessageHandler(std::string msg, Game& game)
         char msgDestination = uint8_t(parsedMsg["destination"]);
 
         json message;
-        message["id"] = 1;
+        message["id"] = ID_RENDERBOARD;
 
         MoveList moveList = game.GetLegalMoves();
         for (int i = 0; i < moveList.count; i++)
@@ -60,6 +60,14 @@ void SocketMessageHandler(std::string msg, Game& game)
     }
     case ID_MAKEBESTMOVE:
     {
+        searchTimeGraphData.clear();
+        searchTimeGraphData["id"] = ID_SEARCHTIMEGRAPHDATA;
+        searchTimeGraphData["times"] = json::array();
+
+        evalGraphData.clear();
+        evalGraphData["id"] = ID_EVALGRAPHDATA;
+        evalGraphData["evals"] = json::array();
+
         if (!IsRunning(GetGameState(game))) { break; }
 
         if (engineSettings.searchByDepth) { Minimax(game, engineSettings.searchDepth, -0x10000, 0x10000); }
@@ -69,11 +77,20 @@ void SocketMessageHandler(std::string msg, Game& game)
         std::cout << MoveToAlgebraic(game.bestMove) << "\n";
 
         json message;
-        message["id"] = 1;
+        message["id"] = ID_RENDERBOARD;
         message["position"] = game.position;
 
         std::cout << "sending\n";
         socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
+
+        message.clear();
+        message = searchTimeGraphData;
+        socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
+
+        message.clear();
+        message = evalGraphData;
+        socketLoop->defer([message]() { mySocket->send(message.dump(), uWS::OpCode::TEXT); });
+
         break;
     }
     case ID_SETTINGS:
@@ -172,7 +189,14 @@ bool UCIMessageHandler(std::string message, Game& game)
         }
 
         std::chrono::milliseconds searchTime = std::chrono::milliseconds(msRemaining / 20 + msIncrement / 2);
-        std::cout << "info score cp " << TimeSearch(game, searchTime) * 100 << std::endl;
+        if (engineSettings.searchByDepth)
+        {
+            std::cout << "info score cp " << Minimax(game, engineSettings.searchDepth, -0x10000, 0x10000) * 100 << std::endl;
+        }
+        else 
+        {
+            std::cout << "info score cp " << TimeSearch(game, searchTime) * 100 << std::endl;
+        }
         std::cout << "bestmove " << MoveToAlgebraic(game.bestMove) << std::endl;
     }
 
@@ -185,7 +209,7 @@ bool UCIMessageHandler(std::string message, Game& game)
 
 int EngineThread(const bool useUCI)
 {
-    Game game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"); //starting position
+    Game game = Game(); //starting position
 
     while (true)
     {

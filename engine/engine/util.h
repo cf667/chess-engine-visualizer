@@ -456,5 +456,8 @@ constexpr unsigned int ID_MAKEBESTMOVE = 4;
 constexpr unsigned int ID_NEWNODE = 5;
 constexpr unsigned int ID_NODESCORE = 6;
 constexpr unsigned int ID_SETTINGS = 7;
+constexpr unsigned int ID_NODECHUNK = 8;
+constexpr unsigned int ID_SEARCHTIMEGRAPHDATA = 9;
+constexpr unsigned int ID_EVALGRAPHDATA = 10;
 
 void PrintPosition(unsigned char* pos);

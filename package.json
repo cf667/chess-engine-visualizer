@@ -19,7 +19,7 @@
       {
         "from": "engine/x64/Release/engine.exe",
         "to": "engine.exe"
-      }, 
+      },
       {
         "from": "engine/x64/Release/uv.dll",
         "to": "uv.dll"
@@ -44,6 +44,7 @@
   "description": "",
   "dependencies": {
     "@tailwindcss/cli": "^4.1.11",
+    "chart.js": "^4.5.1",
     "electron-reload": "^2.0.0-alpha.1",
     "tailwindcss": "^4.1.11"
   },

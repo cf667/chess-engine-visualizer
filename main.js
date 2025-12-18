@@ -17,6 +17,10 @@ else { enginePath = path.join(__dirname, "engine", "x64", "Release", "engine.exe
 
 function createWindow () {
   const win = new BrowserWindow({
+    webPreferences: {
+      nodeIntegration: true,
+      contextIsolation: false
+    },
     show: false
   });
 

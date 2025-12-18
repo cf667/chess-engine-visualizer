@@ -7,11 +7,14 @@
 #include "util.h"
 #include "evaluation.h"
 #include "transposition_table.h"
+#include "engine.h"
 
 #pragma warning(push, 4)
 
 int main()
 {
+    engineSettings.searchDepth = 7;
+
     // INIT SOCKETS
 
     std::string startupMode;
@@ -23,8 +26,7 @@ int main()
     {
         while (true)
         {
-            /*Game game = Game("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");*/
-            Game game = Game("4K3/8/8/3Q4/4P1k1/8/8/8 w - - 97 162");
+            Game game = Game("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1 ");
 
             std::cin >> startupMode;
             if (startupMode == "depth")
@@ -34,12 +36,16 @@ int main()
 
                 std::cout << std::endl;
 
+                int previousNodeCount = 0;
+
                 for (int i = 1; i <= depth; i++)
                 {
                     auto startTime = std::chrono::high_resolution_clock::now();
                     int score = Minimax(game, i, -0x10000, 0x10000);
                     std::chrono::duration<float> duration = std::chrono::high_resolution_clock::now() - startTime;
-                    std::cout << "Depth " << i << ": " << MoveToAlgebraic(game.bestMove) << " in " << duration << " score: " << score << "\n";
+                    //std::cout << "Depth " << i << ": " << MoveToAlgebraic(game.bestMove) << " in " << duration << " and " << totalNodesSearched - previousNodeCount << " nodes, score: " << score << "\n";
+                    std::cout << "Depth " << i << " in " << duration << " and " << totalNodesSearched - previousNodeCount << " nodes" << "\n";
+                    previousNodeCount = totalNodesSearched;
                 }
                 std::cout << "Total nodes searched: " << totalNodesSearched << "\n";
             }

@@ -14,6 +14,13 @@ public:
 	char capture = -1;
 };
 
+class MoveList
+{
+public:
+	int count = 0;
+	Move list[256];
+};
+
 class GameRules
 {
 public:
@@ -22,13 +29,6 @@ public:
 	char enPassantTarget;
 	char castlingAbility;
 	char halfMoveCounter; //for 50 move rule
-};
-
-class MoveList
-{
-public:
-	int count = 0;
-	Move list[256];
 };
 
 class Game
@@ -42,7 +42,7 @@ public:
 	bool toMove; // 1 for white / 0 for black
 	GameRules gameRules;
 
-	uint64_t hashKey;
+	uint64_t hashKey; //to detect position repetitions
 
 	bool MakeMove(Move move);
 	bool IsCheck(bool white);

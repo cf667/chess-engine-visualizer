@@ -13,15 +13,15 @@
   <div id="game" class="flex flex-col justify-center items-center center gap-4 p-4 max-w-full w-full h-full">
     
     <div class="absolute top-2 left-2 flex">
-      <button id="btn_game_view" class="border border-neutral-100 text-neutral-100 px-2 py-1">Game</button>
-      <button id="btn_settings_view" class="border border-neutral-100 text-neutral-100 px-2 py-1">Settings</button>
+      <button id="btn_game_view" class="border border-neutral-100 text-neutral-100 px-2 py-1">Spiel</button>
+      <button id="btn_settings_view" class="border border-neutral-100 text-neutral-100 px-2 py-1">Einstellungen</button>
     </div>
     
     <div id="game_view" class="flex flex-col justify-center items-center gap-4 w-full h-full">
-      <button id="make_best_move" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1">make best move</button>
+      <button id="make_best_move" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1">Suche starten</button>
       <div id="chessboard" class="grid grid-cols-8 grid-rows-8 aspect-square w-[80vmin] max-h-screen border-4 border-neutral-100"></div>
       <label class="text-neutral-100">
-        Import a position (confirm with enter):
+        Importiere eine Position (mit Enter bestätigen):
         <input type="text" id="fen_input" placeholder="FEN" class="border-1 border-neutral-100 text-neutral-100 px-2 py-1"/>
       </label>
     </div>
@@ -29,20 +29,20 @@
     <div id="settings_view" class="hidden flex flex-col justify-center items-center gap-4 w-full h-full text-neutral-100">
       <h2 class="text-xl">Engine Settings</h2>
       <label class="flex items-center gap-2">
-        Search by...
-        <span class="text-neutral-100">Depth</span>
+        Suche beenden nach ...
+        <span class="text-neutral-100">Suchtiefe</span>
         <label class="relative inline-flex items-center cursor-pointer">
-          <input type="checkbox" id="search_mode" class="sr-only peer">
+          <input type="checkbox" id="search_mode" class="sr-only peer" checked>
           <div class="w-11 h-6 bg-neutral-700 rounded-full 
                       after:content-[''] after:absolute after:top-[2px] after:left-[2px] 
                       after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all 
                       peer-checked:after:translate-x-5">
           </div>
         </label>
-        <span class="text-neutral-100">Time</span>
+        <span class="text-neutral-100">Zeit</span>
       </label>
-      <label id="depth_label" class="flex items-center gap-2">
-        Search Depth:
+      <label id="depth_label" class="flex items-center gap-2 hidden">
+        Suchtiefe: 
         <input 
           type="range" 
           id="search_depth" 
@@ -53,8 +53,8 @@
         />
         <span id="depth_value" class="text-neutral-100">6</span>
       </label>
-      <label id="time_label" class="hidden">
-        Search Time (ms):
+      <label id="time_label" class="">
+        Suchzeit (ms): 
         <input type="number" id="search_time" class="bg-neutral-800 border border-neutral-100 text-neutral-100 px-2 py-1 w-28" value="5000" />
       </label>
       <label>
@@ -65,24 +65,12 @@
         Move Sorting:
         <input type="checkbox" id="enable_move_sorting" checked />
       </label>
-      <label>
-        Transposition Table:
-        <input type="checkbox" id="enable_transposition_table" unchecked />
-      </label>
-      <label>
-        Evaluation Style:
-        <select id="eval_style" class="bg-neutral-800 border border-neutral-100 text-neutral-100 px-2 py-1">
-          <option value="material">Material Only</option>
-          <option value="basic">Basic Positional</option>
-          <option value="advanced">Advanced</option>
-        </select>
-      </label>
       <div class="flex justify-end mt-4">
         <button 
           id="apply_changes" 
           class="bg-neutral-700 text-neutral-100 px-4 py-2 rounded"
         >
-          Apply Changes
+          Einstellungen übernehmen
         </button>
       </div>
     </div>
@@ -93,20 +81,22 @@
   <div id="visualization" class="flex flex-col items-center justify-center p-4 w-full h-full">
     <div class="top-2 right-2">
       <select id="visualization_select" class="bg-neutral-800 border border-neutral-100 text-neutral-100 px-2 py-1">
-        <option value="tree">Search Tree</option>
-        <option value="heatmap">Heatmap</option>
-        <option value="evalgraph">Evaluation Graph</option>
+        <option value="tree">Suchbaum</option>
+        <option value="searchtime">Suchtiefe - Zeit</option>
+        <option value="evalgraph">Suchtiefe - Bewertung</option>
       </select>
     </div>
     
     <div class="flex-grow flex items-center justify-center p-4 w-full h-full">
       <canvas id="tree-canvas" class="border-4 border-neutral-100 max-w-full max-h-full w-full h-full"></canvas>
+      <canvas id="searchtime-canvas" class="border-4 border-neutral-100 max-w-full max-h-full w-full h-full hidden"></canvas>
+      <canvas id="evalgraph-canvas" class="border-4 border-neutral-100 max-w-full max-h-full w-full h-full hidden"></canvas>
     </div>
   </div>
 
 
 
-  <script src="renderer.js"></script>
+  <script type="module" src="renderer.js"></script>
 
 
   

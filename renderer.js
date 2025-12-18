@@ -1,3 +1,5 @@
+const Chart = require("chart.js/auto");
+
 // MESSAGE IDs
 
 const ID_RENDERBOARD = 1;
@@ -7,23 +9,36 @@ const ID_MAKEBESTMOVE = 4;
 const ID_NEWNODE = 5;
 const ID_NODESCORE = 6;
 const ID_SETTINGS = 7;
+const ID_NODECHUNK = 8;
+const ID_SEARCHTIMEGRAPHDATA = 9;
+const ID_EVALGRAPHDATA = 10;
 
 // MESSAGE HANDLERS
 
 //input
 
+let nodes = [];
 function inputMessageHandler(message) {
   switch (message.id)
   {
     case ID_RENDERBOARD:
       renderPosition(message.position);
       break;
-    case ID_NEWNODE:
-      getNewNode(message.nodeId, message.depth, message.parentId, message.previousMove);
+    case ID_NODECHUNK:
+      nodes.push(...message.nodes);
+      draw();
       break;
-    case ID_NODESCORE:
-      getNodeScore(message.nodeId, message.score);
-      break;
+    case ID_SEARCHTIMEGRAPHDATA:
+      getSearchTimeGraphData(message);
+      if (!searchTimeCanvas.classList.contains('hidden')) {
+        console.log("TOLTEOTLO");
+        renderSearchTimeGraph();
+      }
+    case ID_EVALGRAPHDATA:
+      getEvalGraphData(message);
+      if (!evalGraphCanvas.classList.contains('hidden')) {
+        renderEvalGraph();
+      }
   }
 }
 
@@ -46,6 +61,7 @@ function sendMove() {
 //send "make best move" command (ID 4)
 
 function sendMakeBestMove() {
+  nodes = [];
   const jsonMsg = { id: ID_MAKEBESTMOVE };
   ws.send(JSON.stringify(jsonMsg));
 }
@@ -58,7 +74,6 @@ const depthSlider = document.getElementById("search_depth");
 const timeInput = document.getElementById("search_time");
 const alphaBetaCheckbox = document.getElementById("enable_alpha_beta");
 const moveSortingCheckbox = document.getElementById("enable_move_sorting");
-const transpositionCheckbox = document.getElementById("enable_transposition_table");
 
 function sendSettings() {
   const jsonMsg = {
@@ -68,29 +83,36 @@ function sendSettings() {
     searchTime: parseInt(timeInput.value), 
     useAlphaBetaPruning: alphaBetaCheckbox.checked, 
     useMoveSorting: moveSortingCheckbox.checked, 
-    useTranspositionTable: transpositionCheckbox.checked };
+    useTranspositionTable: false };
 
   ws.send(JSON.stringify(jsonMsg));
 }
 
-//get node data (ID 5 / 6)
+//nodes
 
-let nodes = [
-  { id: 1, depth: 0, parentId: 0, previousMove: 0,      score: "no score",  childCount: 2},
-  { id: 2, depth: 1, parentId: 1, previousMove: "d2d3", score: "no score",  childCount: 2 },
-  { id: 3, depth: 1, parentId: 1, previousMove: "d2d4", score: "no score",  childCount: 0 },
-  { id: 4, depth: 2, parentId: 3, previousMove: "d4d5", score: "-4",        childCount: 0 },
-  { id: 5, depth: 2, parentId: 3, previousMove: "d4e4", score: "5",         childCount: 0 }
-];
+// let nodes = [
+//   { id: 1, depth: 0, parentId: 0, previousMove: 0,      score: "no score",  childCount: 2},
+//   { id: 2, depth: 1, parentId: 1, previousMove: "d2d3", score: "no score",  childCount: 2 },
+//   { id: 3, depth: 1, parentId: 1, previousMove: "d2d4", score: "no score",  childCount: 0 },
+//   { id: 4, depth: 2, parentId: 2, previousMove: "d4d5", score: "-4",        childCount: 0 },
+//   { id: 5, depth: 2, parentId: 2, previousMove: "d4e4", score: "5",         childCount: 0 }
+// ];
 //let nodes = [];
-function getNewNode(nodeId, depth, parentId, previousMove) {
-  nodes.push({ id: nodeId, depth: depth, parentId: parentId, previousMove: previousMove, score: "no score", childCount: 0 });
-  if (parentId) {
-    nodes.find(n => n.id === parentId).childCount++;
-  }
+
+//get search time graph data
+
+let searchTimeGraphTimes = [];
+let searchTimeGraphReachedDepth = 0;
+
+let evalGraphEvals = [];
+
+function getSearchTimeGraphData(message) {
+  searchTimeGraphTimes = message.times;
+  searchTimeGraphReachedDepth = message.maxDepth;
 }
-function getNodeScore(nodeId, score) {
-  nodes.find(n => n.id === nodeId).score = score;
+
+function getEvalGraphData(message) {
+  evalGraphEvals = message.evals;
 }
 
 // INIT SOCKET
@@ -104,8 +126,8 @@ function initSocket() {
   }
 
   ws.onmessage = (event) => {
-    console.log("message received:");
-    console.log(event.data);
+    //console.log("message received:");
+    //console.log(event.data);
     inputMessageHandler(JSON.parse(event.data));
   }
 
@@ -253,10 +275,111 @@ function renderPosition(position) {
 
 renderPosition(startPosition);
 
-//visualization - search tree
+//visualization
 
-const treeCanvas = document.getElementById('tree-canvas');
-const context = treeCanvas.getContext('2d');
+const visualizationDiv = document.getElementById("visualization")
+const visualizationSelect = document.getElementById("visualization_select");
+
+const treeCanvas = document.getElementById("tree-canvas");
+const searchTimeCanvas = document.getElementById("searchtime-canvas");
+const evalGraphCanvas = document.getElementById("evalgraph-canvas");
+
+let searchTimeGraph = null;
+let evalGraph = null;
+
+visualizationSelect.addEventListener("change", (e) => {
+  treeCanvas.classList.add('hidden');
+  searchTimeCanvas.classList.add('hidden'); 
+  if (searchTimeGraph) {searchTimeGraph.destroy();}
+  evalGraphCanvas.classList.add('hidden'); 
+  if (evalGraph) {evalGraph.destroy();}
+
+  if (e.target.value === 'tree') {
+    treeCanvas.classList.remove('hidden');
+  } 
+  else if (e.target.value === 'searchtime') {
+    searchTimeCanvas.classList.remove('hidden');
+    renderSearchTimeGraph();
+  } 
+  else if (e.target.value === 'evalgraph') {
+    evalGraphCanvas.classList.remove('hidden');
+    renderEvalGraph();
+  }
+});
+
+//search time chart
+
+function renderSearchTimeGraph() {
+  if (searchTimeGraph) {
+    searchTimeGraph.destroy();
+    searchTimeGraph = null;
+  }
+
+  const ctx = searchTimeCanvas.getContext("2d");
+
+  const labels = [];
+  for (let i = 1; i <= searchTimeGraphReachedDepth; i++) {
+    labels.push(`Depth ${i}`);
+  }
+
+  searchTimeGraph = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Search Time (ms)',
+        data: searchTimeGraphTimes,
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+//eval chart
+
+function renderEvalGraph() {
+  if (evalGraph) {
+    evalGraph.destroy();
+    evalGraph = null;
+  }
+
+  const ctx = evalGraphCanvas.getContext("2d");
+
+  const labels = [];
+  for (let i = 1; i <= searchTimeGraphReachedDepth; i++) {
+    labels.push(`Depth ${i}`);
+  }
+
+  evalGraph = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Evaluation in centipawns',
+        data: evalGraphEvals,
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        y: { beginAtZero: true }
+      }
+    }
+  });
+}
+
+//search tree
+
+const context = treeCanvas.getContext("2d");
 
 //dragging and zooming
 let offsetX = 0, offsetY = 0, zoom = 1;
@@ -282,83 +405,40 @@ treeCanvas.addEventListener('mouseup', () => {
 });
 
 treeCanvas.addEventListener('wheel', e => {
-  const delta = e.deltaY < 0 ? 1.1 : 0.9;
-  zoom *= delta;
+  e.preventDefault();
+
+  const rect = treeCanvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  const zoomFactor = e.deltaY < 0 ? 1.1 : 0.9;
+
+  // Zoom auf die aktuelle Mausposition:
+  const worldX = (mouseX - offsetX) / zoom;
+  const worldY = (mouseY - offsetY) / zoom;
+
+  zoom *= zoomFactor;
+
+  offsetX = mouseX - worldX * zoom;
+  offsetY = mouseY - worldY * zoom;
+
   draw();
 });
 
 let depthInfo = [];
 let bottomNodeIterator = 1;
 
-function renderNode(node) {
-  if (depthInfo[node.depth].renderMode === "count") {
-    //count
-    node.x = null;
-    return;
-  }
-
-  node.y = node.depth * 100 / zoom;
-
-  if (!node.childCount) {
-    node.x = treeCanvas.width / (depthInfo[node.depth].totalNodes + 1) * bottomNodeIterator;
-    bottomNodeIterator++;
-
-    //draw line
-    context.beginPath();
-    context.moveTo(node.x, node.y);
-    context.lineTo(parent.x, parent.y);
-    context.strokeStyle = 'white';
-    context.stroke();
-
-    //draw node
-    if (node.renderMode === "eval") {
-      context.beginPath();
-      context.arc(node.x, node.y, 20 / zoom, 0, Math.PI * 2);
-      context.fillStyle = 'lightblue';
-      context.fill();
-
-      if (node.score !== "no score")
-      {
-        context.fillStyle = 'black';
-        context.font = `${14 / zoom}px sans-serif`;
-        context.fillText(node.score, node.x - 7 / zoom, node.y + 7 / zoom);
-      }
-    }
-    else if (node.renderMode === "dot") {
-      context.beginPath();
-      context.arc(node.x, node.y, 5 / zoom, 0, Math.PI * 2);
-      context.fillStyle = 'lightblue';
-      context.fill();
-    }
-    return;
-  }
-
-  const childNodes = nodes.filter(n => n.parentId === node.id);
-  for (const childNode of childNodes) {
-    renderNode(childNode);
-  }
-  if (childNodes[0].x === null) {
-    node.x = treeCanvas.width / (depthInfo[node.depth].totalNodes + 1) * bottomNodeIterator;
-    bottomNodeIterator++;
-  }
-  else {
-    console.log(node);
-    node.x = ((childNodes[childNodes.length - 1].x - childNodes[0].x) / 2) + childNodes[0].x;
-    for (const childNode of childNodes) {
-      context.beginPath();
-      context.moveTo(node.x, node.y);
-      context.lineTo(childNode.x, childNode.y);
-      context.strokeStyle = 'white';
-      context.lineWidth = 1 / zoom;
-      context.stroke();
-    }
-  }
-
-  //draw node
+function drawCircle(node) {
   if (depthInfo[node.depth].renderMode === "eval") {
     context.beginPath();
     context.arc(node.x, node.y, 20 / zoom, 0, Math.PI * 2);
-    context.fillStyle = 'lightblue';
+    if (node.color !== undefined) {
+      context.fillStyle = node.color;
+    }
+    else {
+      context.fillStyle = 'lightblue';
+    }
+    
     context.fill();
 
     if (node.score !== "no score")
@@ -371,8 +451,78 @@ function renderNode(node) {
   else if (depthInfo[node.depth].renderMode === "dot") {
     context.beginPath();
     context.arc(node.x, node.y, 5 / zoom, 0, Math.PI * 2);
-    context.fillStyle = 'lightblue';
+    if (node.color !== undefined) {
+      context.fillStyle = node.color;
+    }
+    else {
+      context.fillStyle = 'lightblue';
+    }
     context.fill();
+  }
+  return;
+}
+
+function isNodeVisible(node) {
+  const screenX = node.x * zoom + offsetX;
+  const screenY = node.y * zoom + offsetY;
+
+  return (screenX >= 0 &&
+    screenX <= treeCanvas.width &&
+    screenY >= 0 &&
+    screenY <= treeCanvas.height);
+}
+
+function renderNode(node) {
+  if (depthInfo[node.depth].renderMode === "count") {
+    //count
+    node.x = 0;
+    return;
+  }
+
+  node.y = node.depth * 100 / zoom;
+
+  if (node.isCutoff) {
+    node.color = 'yellow';
+  }
+
+  if (node.childCount === 0) {
+    node.x = treeCanvas.width / (depthInfo[node.depth].totalNodes + 1) * bottomNodeIterator;
+    bottomNodeIterator++;
+    
+    if (isNodeVisible(node)) {
+      drawCircle(node);
+    }
+    return;
+  }
+
+  const childNodes = nodes.filter(n => n.parentId === node.id);
+  for (let i = 0; i < childNodes.length; i++) {
+    if (i === childNodes.length - 1 && node.isCutoff) {
+      childNodes[i].color = 'red';
+    }
+    renderNode(childNodes[i]);
+  }
+  if (childNodes[0].x === 0) {
+    node.x = treeCanvas.width / (depthInfo[node.depth].totalNodes + 1) * bottomNodeIterator;
+    bottomNodeIterator++;
+  }
+  else {
+    node.x = ((childNodes[childNodes.length - 1].x - childNodes[0].x) / 2) + childNodes[0].x;
+    for (const childNode of childNodes) {
+      if (isNodeVisible(childNode) || isNodeVisible(node)) {
+        context.beginPath();
+        context.moveTo(node.x, node.y);
+        context.lineTo(childNode.x, childNode.y);
+        context.strokeStyle = 'white';
+        context.lineWidth = 1 / zoom;
+        context.stroke();
+      }
+    }
+  }
+
+  //draw node
+  if (isNodeVisible(node)) {
+    drawCircle(node);
   }
 }
 
@@ -389,15 +539,15 @@ function draw() {
   //get amount of notes per depth
   depthInfo = [];
   const newDepth = { totalNodes: 0, renderMode: "count", iterator: 1 };
+  for (let i = 0; i < 7; i++) {
+    depthInfo.push({...newDepth});
+  }
   for (const node of nodes) {
-    if (node.depth >= depthInfo.length) {
-      depthInfo.push({...newDepth});
-    }
     depthInfo[node.depth].totalNodes++;
   }
 
   //get render mode for every depth
-  for (depth of depthInfo) {
+  for (let depth of depthInfo) {
     const distanceBetweenNodes = (treeCanvas.width / depth.totalNodes) * zoom;
     if (distanceBetweenNodes > 50) {
       depth.renderMode = "eval";
@@ -408,8 +558,9 @@ function draw() {
     //else "count"
   }
 
-  if (nodes[0]) {
-    renderNode(nodes[0]);
+  const rootNode = nodes.find(n => n.depth === 0);
+  if (rootNode) {
+    renderNode(rootNode);
   }
   bottomNodeIterator = 1;
 
@@ -458,7 +609,7 @@ function draw() {
   context.restore();
 }
 
-draw();
+//draw();
 
 let drawCooldown = false;
 const cooldownTime = 50; // in Millisekunden (z. B. 50ms = max 20 FPS)
@@ -515,7 +666,7 @@ fenTextbox.addEventListener("keydown", (event) => {
 
 //apply settings
 
-applyChangesButton = document.getElementById("apply_changes");
+let applyChangesButton = document.getElementById("apply_changes");
 applyChangesButton.addEventListener("click", sendSettings);
 
 //make best move
@@ -523,6 +674,5 @@ applyChangesButton.addEventListener("click", sendSettings);
 const makeBestMoveButton = document.getElementById("make_best_move");
 console.log("init");
 makeBestMoveButton.addEventListener("click", (event) => {
-  console.log("click");
   sendMakeBestMove();
 });
